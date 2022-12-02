@@ -2,16 +2,12 @@
 
 public static class Day01
 {
-    private static readonly string Input = File.ReadAllText("Day01/day01.txt");
-
-    public static int Part1() => Input.Split($"{Environment.NewLine}{Environment.NewLine}")
+    private static readonly IEnumerable<int> Elves = File.ReadAllText("Day01/day01.txt")
+        .Split($"{Environment.NewLine}{Environment.NewLine}")
         .Select(elf => elf.Split(Environment.NewLine).Select(int.Parse))
-        .Max(calories => calories.Sum());
+        .Select(calories => calories.Sum());
 
-    public static int Part2() => Input.Split($"{Environment.NewLine}{Environment.NewLine}")
-        .Select(elf => elf.Split(Environment.NewLine).Select(int.Parse))
-        .Select(calories => calories.Sum())
-        .OrderByDescending(x => x)
-        .Take(3)
-        .Sum();
+    public static int Part1() => Elves.Max();
+
+    public static int Part2() => Elves.OrderByDescending(x => x).Take(3).Sum();
 }
