@@ -6,7 +6,7 @@ public static class Day02
 
     public static int Part1()
     {
-        var score = 0;
+        var totalScore = 0;
 
         foreach (var line in Input)
         {
@@ -14,59 +14,29 @@ public static class Day02
             var left = values[0];
             var right = values[1];
 
-            if (right == "X")
+            var score = left switch
             {
-                if (left == "A")
-                {
-                    score += 1 + 3;
-                }
-                else if (left == "B")
-                {
-                    score += 1 + 0;
-                }
-                else if (left == "C")
-                {
-                    score += 1 + 6;
-                }
-            }
-            else if (right == "Y")
-            {
-                if (left == "A")
-                {
-                    score += 2 + 6;
-                }
-                else if (left == "B")
-                {
-                    score += 2 + 3;
-                }
-                else if (left == "C")
-                {
-                    score += 2 + 0;
-                }
-            }
-            else if (right == "Z")
-            {
-                if (left == "A")
-                {
-                    score += 3 + 0;
-                }
-                else if (left == "B")
-                {
-                    score += 3 + 6;
-                }
-                else if (left == "C")
-                {
-                    score += 3 + 3;
-                }
-            }
+                "A" when right == "X" => 1 + 3,
+                "B" when right == "X" => 1 + 0,
+                "C" when right == "X" => 1 + 6,
+                "A" when right == "Y" => 2 + 6,
+                "B" when right == "Y" => 2 + 3,
+                "C" when right == "Y" => 2 + 0,
+                "A" when right == "Z" => 3 + 0,
+                "B" when right == "Z" => 3 + 6,
+                "C" when right == "Z" => 3 + 3,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+
+            totalScore += score;
         }
 
-        return score;
+        return totalScore;
     }
 
     public static int Part2()
     {
-        var score = 0;
+        var totalScore = 0;
 
         foreach (var line in Input)
         {
@@ -74,53 +44,23 @@ public static class Day02
             var left = values[0];
             var right = values[1];
 
-            if (left == "A")
+            var score = left switch
             {
-                if (right == "X")
-                {
-                    score += 3 + 0;
-                }
-                else if (right == "Y")
-                {
-                    score += 1 + 3;
-                }
-                else if (right == "Z")
-                {
-                    score += 2 + 6;
-                }
-            }
-            else if (left == "B")
-            {
-                if (right == "X")
-                {
-                    score += 1 + 0;
-                }
-                else if (right == "Y")
-                {
-                    score += 2 + 3;
-                }
-                else if (right == "Z")
-                {
-                    score += 3 + 6;
-                }
-            }
-            else if (left == "C")
-            {
-                if (right == "X")
-                {
-                    score += 2 + 0;
-                }
-                else if (right == "Y")
-                {
-                    score += 3 + 3;
-                }
-                else if (right == "Z")
-                {
-                    score += 1 + 6;
-                }
-            }
+                "A" when right == "X" => 3 + 0,
+                "B" when right == "X" => 1 + 0,
+                "C" when right == "X" => 2 + 0,
+                "A" when right == "Y" => 1 + 3,
+                "B" when right == "Y" => 2 + 3,
+                "C" when right == "Y" => 3 + 3,
+                "A" when right == "Z" => 2 + 6,
+                "B" when right == "Z" => 3 + 6,
+                "C" when right == "Z" => 1 + 6,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+
+            totalScore += score;
         }
 
-        return score;
+        return totalScore;
     }
 }
