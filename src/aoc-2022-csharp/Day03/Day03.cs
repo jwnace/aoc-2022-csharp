@@ -4,48 +4,19 @@ public static class Day03
 {
     private static readonly string[] Input = File.ReadAllLines("Day03/day03.txt");
 
-    public static int Part1()
-    {
-        var total = 0;
+    public static int Part1() => Input
+        .Select(line => (Left: line[..(line.Length / 2)], Right: line[(line.Length / 2)..]))
+        .Select(group => group.Left.Intersect(group.Right).Single())
+        .Select(GetPriority)
+        .Sum();
 
-        foreach (var line in Input)
-        {
-            var length = line.Length / 2;
-            var left = line[..length];
-            var right = line[length..];
+    public static int Part2() => Input
+        .Chunk(3)
+        .Select(group => group[0].Intersect(group[1]).Intersect(group[2]).Single())
+        .Select(GetPriority)
+        .Sum();
 
-            var commonLetter = left.Intersect(right).Single();
+    private static int GetPriority(char letter) => IsLowerCase(letter) ? letter - 'a' + 1 : letter - 'A' + 27;
 
-            total += GetPriority(commonLetter);
-        }
-
-        return total;
-    }
-
-    public static int Part2()
-    {
-        var total = 0;
-        var groups = Input.Chunk(3);
-
-        foreach (var group in groups)
-        {
-            var (a, b, c) = (group[0], group[1], group[2]);
-
-            var commonLetter = a.Intersect(b).Intersect(c).Single();
-
-            total += GetPriority(commonLetter);
-        }
-
-        return total;
-    }
-
-    private static int GetPriority(char commonLetter)
-    {
-        if (commonLetter is >= 'a' and <= 'z')
-        {
-            return commonLetter - 'a' + 1;
-        }
-
-        return commonLetter - 'A' + 27;
-    }
+    private static bool IsLowerCase(char letter) => letter is >= 'a' and <= 'z';
 }
