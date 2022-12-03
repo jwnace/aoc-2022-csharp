@@ -4,7 +4,55 @@ public static class Day03
 {
     private static readonly string[] Input = File.ReadAllLines("Day03/day03.txt");
 
-    public static int Part1() => 1;
+    public static int Part1()
+    {
+        var total = 0;
 
-    public static int Part2() => 2;
+        foreach (var line in Input)
+        {
+            var length = line.Length / 2;
+            var left = line[..length];
+            var right = line[length..];
+
+            var commonLetter = left.Intersect(right).Single();
+
+            if (commonLetter is >= 'a' and <= 'z')
+            {
+                total += commonLetter - 'a' + 1;
+            }
+            else
+            {
+                total += commonLetter - 'A' + 27;
+            }
+        }
+
+        return total;
+    }
+
+    public static int Part2()
+    {
+        var total = 0;
+
+        var chunks = Input.Chunk(3);
+
+        foreach (var group in chunks)
+        {
+            var a = group[0];
+            var b = group[1];
+            var c = group[2];
+
+            var commonLetter = a.Intersect(b).Intersect(c).Single();
+
+            if (commonLetter is >= 'a' and <= 'z')
+            {
+                total += commonLetter - 'a' + 1;
+            }
+            else
+            {
+                total += commonLetter - 'A' + 27;
+            }
+        }
+
+        return total;
+    }
 }
