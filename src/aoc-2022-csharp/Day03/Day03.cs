@@ -16,14 +16,7 @@ public static class Day03
 
             var commonLetter = left.Intersect(right).Single();
 
-            if (commonLetter is >= 'a' and <= 'z')
-            {
-                total += commonLetter - 'a' + 1;
-            }
-            else
-            {
-                total += commonLetter - 'A' + 27;
-            }
+            total += GetPriority(commonLetter);
         }
 
         return total;
@@ -40,16 +33,19 @@ public static class Day03
 
             var commonLetter = a.Intersect(b).Intersect(c).Single();
 
-            if (commonLetter is >= 'a' and <= 'z')
-            {
-                total += commonLetter - 'a' + 1;
-            }
-            else
-            {
-                total += commonLetter - 'A' + 27;
-            }
+            total += GetPriority(commonLetter);
         }
 
         return total;
+    }
+
+    private static int GetPriority(char commonLetter)
+    {
+        if (commonLetter is >= 'a' and <= 'z')
+        {
+            return commonLetter - 'a' + 1;
+        }
+
+        return commonLetter - 'A' + 27;
     }
 }
