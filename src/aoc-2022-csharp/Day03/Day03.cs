@@ -32,14 +32,11 @@ public static class Day03
     public static int Part2()
     {
         var total = 0;
+        var groups = Input.Chunk(3);
 
-        var chunks = Input.Chunk(3);
-
-        foreach (var group in chunks)
+        foreach (var group in groups)
         {
-            var a = group[0];
-            var b = group[1];
-            var c = group[2];
+            var (a, b, c) = (group[0], group[1], group[2]);
 
             var commonLetter = a.Intersect(b).Intersect(c).Single();
 
