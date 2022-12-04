@@ -3,8 +3,8 @@
 public static class Day04
 {
     private static readonly IEnumerable<(Range Left, Range Right)> Pairs = File.ReadAllLines("Day04/day04.txt")
-        .Select(line => line.Split(','))
-        .Select(ranges => (Range.FromString(ranges[0]), Range.FromString(ranges[1])));
+        .Select(line => line.Split(',').Select(Range.FromString).ToArray())
+        .Select(ranges => (ranges[0], ranges[1]));
 
     public static int Part1() => Pairs
         .Count(ranges => ranges.Left.Contains(ranges.Right) || ranges.Right.Contains(ranges.Left));
