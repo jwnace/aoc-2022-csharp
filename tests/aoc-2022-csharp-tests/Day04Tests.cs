@@ -8,7 +8,7 @@ public class Day04Tests
     public void Part1Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 466;
 
         // act
         var actual = Day04.Part1();
@@ -21,7 +21,7 @@ public class Day04Tests
     public void Part2Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 865;
 
         // act
         var actual = Day04.Part2();
