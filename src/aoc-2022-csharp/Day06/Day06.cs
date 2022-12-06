@@ -10,18 +10,9 @@ public static class Day06
 
     public static int Part2() => GetStartOfPacketMarker(Input, 14);
 
-    public static int GetStartOfPacketMarker(string message, int sliceSize)
-    {
-        var slices = message.Slice(sliceSize).ToArray();
-
-        for (var i = 0; i < slices.Length; i++)
-        {
-            if (slices[i].Distinct().Count() == sliceSize)
-            {
-                return i + sliceSize;
-            }
-        }
-
-        return 0;
-    }
+    public static int GetStartOfPacketMarker(string message, int sliceSize) =>
+        message.Slice(sliceSize)
+            .Select((s, i) => (Slice: s, Index: i))
+            .First(x => x.Slice.Distinct().Count() == sliceSize)
+            .Index + sliceSize;
 }
