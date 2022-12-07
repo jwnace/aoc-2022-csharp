@@ -4,15 +4,6 @@ public static class Day07
 {
     private static readonly string[] Lines = File.ReadAllLines("Day07/day07.txt");
 
-    private class Directory
-    {
-        public string Name { get; init; } = "";
-        public int Size { get; set; }
-        public Directory? Parent { get; init; }
-        public List<Directory> Children { get; } = new();
-        public int TotalSize => Size + Children.Sum(x => x.TotalSize);
-    }
-
     public static int Part1() => GetDirectories().Where(x => x.TotalSize <= 100_000).Sum(x => x.TotalSize);
 
     public static int Part2()
@@ -60,5 +51,14 @@ public static class Day07
         }
 
         return directories;
+    }
+
+    private class Directory
+    {
+        public string Name { get; init; } = "";
+        public int Size { get; set; }
+        public Directory? Parent { get; init; }
+        public List<Directory> Children { get; } = new();
+        public int TotalSize => Size + Children.Sum(x => x.TotalSize);
     }
 }
