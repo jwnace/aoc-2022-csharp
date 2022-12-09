@@ -23,58 +23,45 @@ public static class Day09
 
             for (var i = 0; i < steps; i++)
             {
-                if (direction == "R")
-                {
-                    rope[0].X++;
-                }
-                else if (direction == "L")
-                {
-                    rope[0].X--;
-                }
-                else if (direction == "U")
-                {
-                    rope[0].Y++;
-                }
-                else if (direction == "D")
-                {
-                    rope[0].Y--;
-                }
-                else
-                {
-                    throw new InvalidOperationException();
-                }
-
-                for(int j = 1; j < rope.Length; j++)
-                {
-                    if (!AreAdjacent(rope[j - 1], rope[j]))
-                    {
-                        if (rope[j - 1].Y == rope[j].Y)
-                        {
-                            rope[j].X += rope[j - 1].X > rope[j].X ? 1 : -1;
-                        }
-                        else if (rope[j - 1].X == rope[j].X)
-                        {
-                            rope[j].Y += rope[j - 1].Y > rope[j].Y ? 1 : -1;
-                        }
-                        else
-                        {
-                            var dX = rope[j - 1].X - rope[j].X;
-                            var dY = rope[j - 1].Y - rope[j].Y;
-
-                            rope[j].X += dX > 0 ? 1 : -1;
-                            rope[j].Y += dY > 0 ? 1 : -1;
-                        }
-
-                        if (j == tail)
-                        {
-                            visited.Add(rope[j]);
-                        }
-                    }
-                }
+                MoveHead(ref rope[0], direction);
+                UpdateKnots(rope);
+                visited.Add(rope[tail]);
             }
         }
 
         return visited.Count;
+    }
+
+    private static void MoveHead(ref (int X, int Y) head, string direction)
+    {
+        switch (direction)
+        {
+            case "R":
+                head.X++;
+                break;
+            case "L":
+                head.X--;
+                break;
+            case "U":
+                head.Y++;
+                break;
+            case "D":
+                head.Y--;
+                break;
+        }
+    }
+
+    private static void UpdateKnots((int X, int Y)[] rope)
+    {
+        for (var j = 1; j < rope.Length; j++)
+        {
+            if (AreAdjacent(rope[j - 1], rope[j]))
+            {
+                continue;
+            }
+
+            MoveKnotTowardsPrevious(ref rope[j], ref rope[j - 1]);
+        }
     }
 
     private static bool AreAdjacent((int X, int Y) first, (int X, int Y) second)
@@ -93,5 +80,25 @@ public static class Day09
         };
 
         return adjacentCells.Contains(second);
+    }
+
+    private static void MoveKnotTowardsPrevious(ref (int X, int Y) current, ref (int X, int Y) previous)
+    {
+        if (previous.Y == current.Y)
+        {
+            current.X += previous.X > current.X ? 1 : -1;
+        }
+        else if (previous.X == current.X)
+        {
+            current.Y += previous.Y > current.Y ? 1 : -1;
+        }
+        else
+        {
+            var dX = previous.X - current.X;
+            var dY = previous.Y - current.Y;
+
+            current.X += dX > 0 ? 1 : -1;
+            current.Y += dY > 0 ? 1 : -1;
+        }
     }
 }
