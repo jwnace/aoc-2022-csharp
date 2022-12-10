@@ -11,7 +11,7 @@ public static class Day10
         var register = 1;
         var cycle = 0;
         var cycleValues = new Dictionary<int, int>();
-        var stack = new Stack<string>();
+        var callStack = new Stack<string>();
 
         for (var i = 0; i < Input.Length; i++)
         {
@@ -19,7 +19,6 @@ public static class Day10
 
             var line = Input[i];
 
-            // check if this is one of the cycles we care about
             if (new[] { 20, 60, 100, 140, 180, 220 }.Contains(cycle))
             {
                 cycleValues[cycle] = register;
@@ -32,20 +31,14 @@ public static class Day10
                 continue;
             }
 
-            if (stack.Count == 0)
+            if (callStack.Count == 0)
             {
-                stack.Push(line);
+                callStack.Push(line);
                 i--;
                 continue;
             }
 
-            var temp = stack.Pop();
-
-            if (temp != line)
-            {
-                throw new InvalidOperationException();
-            }
-
+            callStack.Pop();
             register += int.Parse(values[1]);
         }
 
@@ -56,42 +49,30 @@ public static class Day10
     {
         var register = 1;
         var cycle = 0;
-        var stack = new Stack<string>();
+        var callStack = new Stack<string>();
         var crt = new char[240];
 
         for (var i = 0; i < Input.Length; i++)
         {
             var line = Input[i];
-
-            var foo = new[] { register - 1, register, register + 1 };
-
-            if (foo.Contains(cycle % 40))
-            {
-                crt[cycle] = '#';
-            }
-            else
-            {
-                crt[cycle] = ' ';
-            }
-
-            cycle++;
-
             var values = line.Split(' ');
+            var sprite = new[] { register - 1, register, register + 1 };
+            crt[cycle] = sprite.Contains(cycle % 40) ? '#' : ' ';
+            cycle++;
 
             if (values[0] == "noop")
             {
                 continue;
             }
 
-            if (stack.Count == 0)
+            if (callStack.Count == 0)
             {
-                stack.Push(line);
+                callStack.Push(line);
                 i--;
                 continue;
             }
 
-            stack.Pop();
-
+            callStack.Pop();
             register += int.Parse(values[1]);
         }
 
