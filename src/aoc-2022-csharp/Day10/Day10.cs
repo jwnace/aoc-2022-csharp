@@ -15,16 +15,14 @@ public static class Day10
 
         for (var i = 0; i < Input.Length; i++)
         {
-            cycle++;
-
             var line = Input[i];
+            var values = line.Split(' ');
+            cycle++;
 
             if (new[] { 20, 60, 100, 140, 180, 220 }.Contains(cycle))
             {
                 cycleValues[cycle] = register;
             }
-
-            var values = line.Split(' ');
 
             if (values[0] == "noop")
             {
@@ -76,6 +74,11 @@ public static class Day10
             register += int.Parse(values[1]);
         }
 
+        return GenerateOutput(crt);
+    }
+
+    private static string GenerateOutput(char[] crt)
+    {
         var sb = new StringBuilder();
 
         for (var j = 0; j < crt.Length; j++)
