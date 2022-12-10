@@ -8,7 +8,7 @@ public class Day10Tests
     public void Part1Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 11820;
 
         // act
         var actual = Day10.Part1();
@@ -21,7 +21,13 @@ public class Day10Tests
     public void Part2Test()
     {
         // arrange
-        var expected = 0;
+        var expected =
+            Environment.NewLine + "#### ###    ## ###  ###  #  #  ##  #  # " +
+            Environment.NewLine + "#    #  #    # #  # #  # # #  #  # #  # " +
+            Environment.NewLine + "###  #  #    # ###  #  # ##   #  # #### " +
+            Environment.NewLine + "#    ###     # #  # ###  # #  #### #  # " +
+            Environment.NewLine + "#    #    #  # #  # # #  # #  #  # #  # " +
+            Environment.NewLine + "#### #     ##  ###  #  # #  # #  # #  # ";
 
         // act
         var actual = Day10.Part2();
