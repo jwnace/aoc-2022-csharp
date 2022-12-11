@@ -8,7 +8,7 @@ public class Day11Tests
     public void Part1Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 99852;
 
         // act
         var actual = Day11.Part1();
@@ -21,7 +21,7 @@ public class Day11Tests
     public void Part2Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 25935263541;
 
         // act
         var actual = Day11.Part2();
@@ -30,4 +30,3 @@ public class Day11Tests
         actual.Should().Be(expected);
     }
 }
-

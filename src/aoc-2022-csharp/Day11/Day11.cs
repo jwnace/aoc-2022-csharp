@@ -5,25 +5,17 @@ public static class Day11
     private static readonly string[] Input = File.ReadAllText("Day11/day11.txt")
         .Split($"{Environment.NewLine}{Environment.NewLine}");
 
-    private class Monkey
-    {
-        public string Name { get; set; }
-        public long Number { get; set; }
-        public List<long> Items { get; set; }
-        public string Operation { get; set; }
-        public string Test { get; set; }
-        public string IfTrue { get; set; }
-        public string IfFalse { get; set; }
-    }
+    public static long Part1() => Solve(1);
 
-    public static long Part1()
+    public static long Part2() => Solve(2);
+
+    private static long Solve(int part)
     {
+        var rounds = part == 1 ? 20 : 10_000;
         var monkeys = GetMonkeys();
+        var dict = monkeys.ToDictionary(monkey => monkey.Number, _ => 0L);
 
-        var dict = new Dictionary<long, long>
-            { { 0, 0 }, { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 }, { 5, 0 }, { 6, 0 }, { 7, 0 }, };
-
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < rounds; i++)
         {
             foreach (var monkey in monkeys)
             {
@@ -31,39 +23,20 @@ public static class Day11
                 {
                     dict[monkey.Number]++;
 
-                    var modifier = long.TryParse(monkey.Operation.Split(' ')[^1], out var value)
-                        ? value
-                        : monkey.Items[0];
+                    var item = DoOperation(monkey, monkey.Items[0]);
 
-                    if (monkey.Operation.Contains("+"))
+                    if (part == 1)
                     {
-                        monkey.Items[0] += modifier;
-                    }
-                    else if (monkey.Operation.Contains("*"))
-                    {
-                        monkey.Items[0] *= modifier;
+                        item /= 3;
                     }
                     else
                     {
-                        throw new InvalidOperationException();
+                        item %= monkeys.GetLeastCommonMultiple();
                     }
 
-                    monkey.Items[0] /= 3;
-
-                    var divisor = long.Parse(monkey.Test.Split(' ')[^1]);
-
-                    if (monkey.Items[0] % divisor == 0)
-                    {
-                        var number = long.Parse(monkey.IfTrue.Split(' ')[^1]);
-                        monkeys.Single(m => m.Number == number).Items.Add(monkey.Items[0]);
-                        monkey.Items.RemoveAt(0);
-                    }
-                    else
-                    {
-                        var number = long.Parse(monkey.IfFalse.Split(' ')[^1]);
-                        monkeys.Single(m => m.Number == number).Items.Add(monkey.Items[0]);
-                        monkey.Items.RemoveAt(0);
-                    }
+                    var target = item % monkey.Divisor == 0 ? monkey.TrueTarget : monkey.FalseTarget;
+                    monkeys.Single(m => m.Number == target).Items.Add(item);
+                    monkey.Items.RemoveAt(0);
                 }
             }
         }
@@ -73,35 +46,60 @@ public static class Day11
         return topTwo[0] * topTwo[1];
     }
 
+    private static long DoOperation(Monkey monkey, long item)
+    {
+        var temp = long.TryParse(monkey.Operation.Split(' ')[^1], out var value) ? value : item;
+
+        if (monkey.Operation.Contains("+"))
+        {
+            item += temp;
+        }
+        else if (monkey.Operation.Contains("*"))
+        {
+            item *= temp;
+        }
+
+        return item;
+    }
+
     private static List<Monkey> GetMonkeys()
     {
         var monkeys = new List<Monkey>();
 
-        foreach (var line in Input)
+        foreach (var group in Input)
         {
-            var values = line.Split(Environment.NewLine);
-            var name = values[0][..^1];
-            var number = long.Parse(values[0][^2].ToString());
+            var values = group.Split(Environment.NewLine);
+            var number = int.Parse(values[0][^2].ToString());
             var startingItems = values[1].Split(": ")[1].Split(", ").Select(long.Parse).ToList();
             var operation = values[2].Split("= ")[1];
-            var test = values[3].Split(": ")[1];
-            var ifTrue = values[4].Split(": ")[1];
-            var ifFalse = values[5].Split(": ")[1];
+            var divisor = int.Parse(values[3].Split(' ')[^1]);
+            var trueTarget = int.Parse(values[4].Split(' ')[^1]);
+            var falseTarget = int.Parse(values[5].Split(' ')[^1]);
 
             monkeys.Add(new Monkey
             {
-                Name = name,
                 Number = number,
                 Items = startingItems,
                 Operation = operation,
-                Test = test,
-                IfTrue = ifTrue,
-                IfFalse = ifFalse
+                Divisor = divisor,
+                TrueTarget = trueTarget,
+                FalseTarget = falseTarget,
             });
         }
 
         return monkeys;
     }
 
-    public static long Part2() => 2;
+    private static long GetLeastCommonMultiple(this IEnumerable<Monkey> monkeys) =>
+        monkeys.Aggregate(1, (accum, monkey) => accum * monkey.Divisor);
+
+    private class Monkey
+    {
+        public int Number { get; init; }
+        public List<long> Items { get; init; } = new();
+        public string Operation { get; init; } = "";
+        public int Divisor { get; init; }
+        public int TrueTarget { get; init; }
+        public int FalseTarget { get; init; }
+    }
 }
