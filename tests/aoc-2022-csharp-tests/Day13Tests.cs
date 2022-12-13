@@ -13,6 +13,7 @@ public class Day13Tests
     [TestCase("[]", "[3]", true)]
     [TestCase("[[[]]]", "[[]]", false)]
     [TestCase("[1,[2,[3,[4,[5,6,7]]]],8,9]", "[1,[2,[3,[4,[5,6,0]]]],8,9]", false)]
+    [TestCase("[[],[],[9,7]]", "[[],[]]", false)]
     public void AreInCorrectOrderTest(string left, string right, bool expected)
     {
         // act
@@ -22,30 +23,29 @@ public class Day13Tests
         actual.Should().Be(expected);
     }
 
+    [Test]
+    public void Part1Test()
+    {
+        // arrange
+        var expected = 5684;
 
-    // [Test]
-    // public void Part1Test()
-    // {
-    //     // arrange
-    //     var expected = 0;
-    //
-    //     // act
-    //     var actual = Day13.Part1();
-    //
-    //     // assert
-    //     actual.Should().Be(expected);
-    // }
-    //
-    // [Test]
-    // public void Part2Test()
-    // {
-    //     // arrange
-    //     var expected = 0;
-    //
-    //     // act
-    //     var actual = Day13.Part2();
-    //
-    //     // assert
-    //     actual.Should().Be(expected);
-    // }
+        // act
+        var actual = Day13.Part1();
+
+        // assert
+        actual.Should().Be(expected);
+    }
+
+    [Test]
+    public void Part2Test()
+    {
+        // arrange
+        var expected = 22932;
+
+        // act
+        var actual = Day13.Part2();
+
+        // assert
+        actual.Should().Be(expected);
+    }
 }
