@@ -1,41 +1,60 @@
-﻿using System.Diagnostics.SymbolStore;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace aoc_2022_csharp.Day13;
 
 public static class Day13
 {
-    private static readonly (string Left, string Right)[] Pairs = File.ReadAllText("Day13/day13.txt")
-        .Split($"{Environment.NewLine}{Environment.NewLine}")
-        .Select(p => p.Split(Environment.NewLine))
-        .Select(x => (x[0], x[1]))
-        .ToArray();
-
     public static int Part1()
     {
+        var pairs = File.ReadAllText("Day13/day13.txt")
+            .Split($"{Environment.NewLine}{Environment.NewLine}")
+            .Select(p => p.Split(Environment.NewLine))
+            .Select(x => (Left: x[0], Right: x[1]))
+            .ToArray();
+        
         var dict = new Dictionary<int, bool>();
 
-        for (var i = 0; i < Pairs.Length; i++)
+        for (var i = 0; i < pairs.Length; i++)
         {
-            var pair = Pairs[i];
+            var pair = pairs[i];
 
             var left = JsonConvert.DeserializeObject(pair.Left);
             var right = JsonConvert.DeserializeObject(pair.Right);
 
-            var areInCorrectOrder = AreInCorrectOrder(left, right);
-
-            dict[i + 1] = areInCorrectOrder;
+            dict[i + 1] = AreInCorrectOrder(left, right);
         }
 
         return dict.Where(x => x.Value).Sum(x => x.Key);
     }
 
+    public static int Part2()
+    {
+        var strings = File.ReadAllText("Day13/day13.txt")
+            .Replace($"{Environment.NewLine}{Environment.NewLine}", $"{Environment.NewLine}")
+            .Split(Environment.NewLine)
+            .ToList();
+
+        strings.Add("[[2]]");
+        strings.Add("[[6]]");
+
+        var packets = strings.Select(JsonConvert.DeserializeObject).ToList();
+        packets.Sort(Compare);
+
+        var index1 = packets.Select((x, i) => new { Item = x, Index = i })
+            .Single(x => JsonConvert.SerializeObject(x.Item) == "[[2]]")
+            .Index + 1;
+
+        var index2 = packets.Select((x, i) => new { Item = x, Index = i })
+            .Single(x => JsonConvert.SerializeObject(x.Item) == "[[6]]")
+            .Index + 1;
+
+        return index1 * index2;
+    }
+    
     public static bool AreInCorrectOrder(object left, object right)
     {
-        return Compare(left, right) < 0;
+        return Compare(left, right) <= 0;
     }
 
     private static int Compare(object left, object right)
@@ -132,35 +151,5 @@ public static class Day13
         }
 
         return 0;
-    }
-
-    public static int Part2()
-    {
-        var strings = File.ReadAllText("Day13/day13.txt")
-            .Replace($"{Environment.NewLine}{Environment.NewLine}", $"{Environment.NewLine}")
-            .Split(Environment.NewLine)
-            .ToList();
-
-        strings.Add("[[2]]");
-        strings.Add("[[6]]");
-
-        var foo = JsonConvert.DeserializeObject("[[2]]");
-        var bar = JsonConvert.DeserializeObject("[[6]]");
-
-        var packets = strings.Select(JsonConvert.DeserializeObject).ToList();
-        packets.Sort(Compare);
-
-        var serializedFoo = JsonConvert.SerializeObject(foo);
-        var serializedBar = JsonConvert.SerializeObject(bar);
-
-        var indexOfFoo = packets.Select((x, i) => new { Item = x, Index = i })
-            .Single(x => JsonConvert.SerializeObject(x.Item) == "[[2]]")
-            .Index + 1;
-
-        var indexOfBar = packets.Select((x, i) => new { Item = x, Index = i })
-            .Single(x => JsonConvert.SerializeObject(x.Item) == "[[6]]")
-            .Index;
-
-        return indexOfFoo * indexOfBar;
     }
 }
