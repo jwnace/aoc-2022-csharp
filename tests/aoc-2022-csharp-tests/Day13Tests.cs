@@ -1,5 +1,6 @@
 ﻿using aoc_2022_csharp.Day13;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace aoc_2022_csharp_tests;
 
@@ -18,7 +19,7 @@ public class Day13Tests
     public void AreInCorrectOrderTest(string left, string right, bool expected)
     {
         // act
-        var actual = Day13.AreInCorrectOrder(JsonConvert.DeserializeObject(left), JsonConvert.DeserializeObject(right));
+        var actual = Day13.AreInCorrectOrder((JArray)JsonConvert.DeserializeObject(left), (JArray)JsonConvert.DeserializeObject(right));
 
         // assert
         actual.Should().Be(expected);
@@ -39,7 +40,7 @@ public class Day13Tests
     public void CompareTest(string left, string right, int expected)
     {
         // act
-        var actual = Day13.Compare(JsonConvert.DeserializeObject(left), JsonConvert.DeserializeObject(right));
+        var actual = Day13.Compare((JArray)JsonConvert.DeserializeObject(left), (JArray)JsonConvert.DeserializeObject(right));
 
         // assert
         actual.Should().Be(expected);
