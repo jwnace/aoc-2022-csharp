@@ -14,10 +14,32 @@ public class Day13Tests
     [TestCase("[[[]]]", "[[]]", false)]
     [TestCase("[1,[2,[3,[4,[5,6,7]]]],8,9]", "[1,[2,[3,[4,[5,6,0]]]],8,9]", false)]
     [TestCase("[[],[],[9,7]]", "[[],[]]", false)]
+    [TestCase("[[],[]]", "[[],[],[9,7]]", true)]
     public void AreInCorrectOrderTest(string left, string right, bool expected)
     {
         // act
         var actual = Day13.AreInCorrectOrder(JsonConvert.DeserializeObject(left), JsonConvert.DeserializeObject(right));
+
+        // assert
+        actual.Should().Be(expected);
+    }
+    
+    [TestCase("[1,1,3,1,1]", "[1,1,5,1,1]", -1)]
+    [TestCase("[[1],[2,3,4]]", "[[1],4]", -1)]
+    [TestCase("[9]", "[[8,7,6]]", 1)]
+    [TestCase("[[4,4],4,4]", "[[4,4],4,4,4]", -1)]
+    [TestCase("[7,7,7,7]", "[7,7,7]", 1)]
+    [TestCase("[]", "[3]", -1)]
+    [TestCase("[[[]]]", "[[]]", 1)]
+    [TestCase("[1,[2,[3,[4,[5,6,7]]]],8,9]", "[1,[2,[3,[4,[5,6,0]]]],8,9]", 1)]
+    [TestCase("[[],[],[9,7]]", "[[],[]]", 1)]
+    [TestCase("[[],[]]", "[[],[],[9,7]]", -1)]
+    [TestCase("[69,420]", "[69,420]", 0)]
+    [TestCase("[420,69]", "[420,69]", 0)]
+    public void CompareTest(string left, string right, int expected)
+    {
+        // act
+        var actual = Day13.Compare(JsonConvert.DeserializeObject(left), JsonConvert.DeserializeObject(right));
 
         // assert
         actual.Should().Be(expected);
