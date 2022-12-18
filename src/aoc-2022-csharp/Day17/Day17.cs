@@ -11,35 +11,25 @@ public static class Day17
 
     private static long Solve(long shapesToDrop)
     {
-        var seen = new Dictionary<(long shapeIndex, long jetIndex, string formation), (long t, long top)>();
+        var memo = new Dictionary<(long shapeIndex, long jetIndex, string formation), (long i, long top)>();
+        var map = new HashSet<(long X, long Y)>();
         var top = 0L;
         var added = 0L;
-        var map = new HashSet<(long X, long Y)>();
-        var currentJetIndex = 0;
+        var jetIndex = 0;
 
         for (var i = 0L; i < shapesToDrop; i++)
         {
-            DropNextShape(i, map, ref currentJetIndex);
+            DropNextShape(i, map, ref jetIndex);
 
             top = map.Max(m => m.Y);
-            var shapeIndex = (int)(i % ShapeCount);
-            var jetIndex = currentJetIndex % Jets.Length; // i think this `jetIndex` is off by one
-            var formation = new string(new[]
-            {
-                (char)('a' + top - (map.Any(m => m.X == 0) ? map.Where(m => m.X == 0).Max(m => m.Y) : 0)),
-                (char)('a' + top - (map.Any(m => m.X == 1) ? map.Where(m => m.X == 1).Max(m => m.Y) : 0)),
-                (char)('a' + top - (map.Any(m => m.X == 2) ? map.Where(m => m.X == 2).Max(m => m.Y) : 0)),
-                (char)('a' + top - (map.Any(m => m.X == 3) ? map.Where(m => m.X == 3).Max(m => m.Y) : 0)),
-                (char)('a' + top - (map.Any(m => m.X == 4) ? map.Where(m => m.X == 4).Max(m => m.Y) : 0)),
-                (char)('a' + top - (map.Any(m => m.X == 5) ? map.Where(m => m.X == 5).Max(m => m.Y) : 0)),
-                (char)('a' + top - (map.Any(m => m.X == 6) ? map.Where(m => m.X == 6).Max(m => m.Y) : 0)),
-            });
-
+            var shapeIndex = i % ShapeCount;
+            jetIndex %= Jets.Length;
+            var formation = GetFormation(top, map);
             var key = (shapeIndex, jetIndex, formation);
 
-            if (seen.ContainsKey(key) && i >= 2022)
+            if (memo.ContainsKey(key))
             {
-                var (oldT, oldY) = seen[key];
+                var (oldT, oldY) = memo[key];
                 var dy = top - oldY;
                 var dt = i - oldT;
                 var amt = (shapesToDrop - i) / dt;
@@ -47,37 +37,58 @@ public static class Day17
                 i += amt * dt;
             }
 
-            seen[key] = (i, top);
+            memo[key] = (i, top);
 
-            var minX = map.Min(m => m.X);
-            var maxX = map.Max(m => m.X);
-            var minY = map.Min(m => m.Y);
-            var maxY = map.Max(m => m.Y);
-
-            if (map.Count > 1_000)
-            {
-                for (var y = minY; y < maxY - 10; y++)
-                {
-                    for (var x = minX; x <= maxX; x++)
-                    {
-                        map.Remove((x, y));
-                    }
-                }
-            }
+            PruneMap(map);
         }
 
         return top + added + 1;
     }
 
-    private static void DropNextShape(long i, HashSet<(long X, long Y)> map, ref int currentJetIndex)
+    private static void PruneMap(ICollection<(long X, long Y)> map)
+    {
+        var minX = map.Min(m => m.X);
+        var maxX = map.Max(m => m.X);
+        var minY = map.Min(m => m.Y);
+        var maxY = map.Max(m => m.Y);
+
+        if (map.Count <= 1_000)
+        {
+            return;
+        }
+
+        for (var y = minY; y < maxY - 10; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                map.Remove((x, y));
+            }
+        }
+    }
+
+    private static string GetFormation(long top, IReadOnlyCollection<(long X, long Y)> map)
+    {
+        return new string(new[]
+        {
+            (char)('a' + top - (map.Any(m => m.X == 0) ? map.Where(m => m.X == 0).Max(m => m.Y) : 0)),
+            (char)('a' + top - (map.Any(m => m.X == 1) ? map.Where(m => m.X == 1).Max(m => m.Y) : 0)),
+            (char)('a' + top - (map.Any(m => m.X == 2) ? map.Where(m => m.X == 2).Max(m => m.Y) : 0)),
+            (char)('a' + top - (map.Any(m => m.X == 3) ? map.Where(m => m.X == 3).Max(m => m.Y) : 0)),
+            (char)('a' + top - (map.Any(m => m.X == 4) ? map.Where(m => m.X == 4).Max(m => m.Y) : 0)),
+            (char)('a' + top - (map.Any(m => m.X == 5) ? map.Where(m => m.X == 5).Max(m => m.Y) : 0)),
+            (char)('a' + top - (map.Any(m => m.X == 6) ? map.Where(m => m.X == 6).Max(m => m.Y) : 0)),
+        });
+    }
+
+    private static void DropNextShape(long i, HashSet<(long X, long Y)> map, ref int jetIndex)
     {
         var shape = GetNextShape(i, map);
 
         while (true)
         {
-            currentJetIndex %= Jets.Length;
-            var jet = Jets[currentJetIndex];
-            currentJetIndex++;
+            jetIndex %= Jets.Length;
+            var jet = Jets[jetIndex];
+            jetIndex++;
 
             if (jet == '<')
             {
@@ -104,17 +115,17 @@ public static class Day17
         }
     }
 
-    private static bool TryMove((long X, long Y)[] shape, IReadOnlySet<(long X, long Y)> map, (long X, long Y) movement)
+    private static bool TryMove((long X, long Y)[] shape, IReadOnlySet<(long X, long Y)> map, (long X, long Y) move)
     {
-        if (WouldCauseCollision(shape, map, movement))
+        if (WouldCauseCollision(shape, map, move))
         {
             return false;
         }
 
         for (var i = 0; i < shape.Length; i++)
         {
-            shape[i].X += movement.X;
-            shape[i].Y += movement.Y;
+            shape[i].X += move.X;
+            shape[i].Y += move.Y;
         }
 
         return true;
