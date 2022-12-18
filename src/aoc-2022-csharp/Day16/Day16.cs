@@ -1,97 +1,23 @@
-﻿using System.Diagnostics;
-
-namespace aoc_2022_csharp.Day16;
+﻿namespace aoc_2022_csharp.Day16;
 
 public static class Day16
 {
     private static readonly string[] Input = File.ReadAllLines("Day16/day16.txt");
-
-    // public static int Part0()
-    // {
-    //     var valves = GetValves();
-    //     var total = 0;
-    //     var currentValve = valves[0];
-    //
-    //     for (int i = 1; i <= 30; i++)
-    //     {
-    //         var openValves = valves.Where(v => v.State == ValveState.Open);
-    //         var flowRate = openValves.Sum(v => v.FlowRate);
-    //
-    //         total += flowRate;
-    //
-    //         Console.WriteLine($"== Minute {i} ==");
-    //
-    //         var openValveString = openValves.Count() switch
-    //         {
-    //             0 => "No valves are open",
-    //             1 => $"Valve {String.Join(", ", openValves)} is open",
-    //             _ => $"Valves {String.Join(", ", openValves)} are open",
-    //         };
-    //
-    //         Console.WriteLine($"{openValveString}, releasing {flowRate} pressure.");
-    //
-    //         if (i == 2)
-    //         {
-    //             valves.First(v => v.Name == "DD").Open();
-    //             Console.WriteLine("You open valve DD");
-    //         }
-    //
-    //         if (i == 5)
-    //         {
-    //             valves.First(v => v.Name == "BB").Open();
-    //             Console.WriteLine("You open valve BB");
-    //         }
-    //
-    //         if (i == 9)
-    //         {
-    //             valves.First(v => v.Name == "JJ").Open();
-    //             Console.WriteLine("You open valve JJ");
-    //         }
-    //
-    //         if (i == 17)
-    //         {
-    //             valves.First(v => v.Name == "HH").Open();
-    //             Console.WriteLine("You open valve HH");
-    //         }
-    //
-    //         if (i == 21)
-    //         {
-    //             valves.First(v => v.Name == "EE").Open();
-    //             Console.WriteLine("You open valve EE");
-    //         }
-    //
-    //         if (i == 24)
-    //         {
-    //             valves.First(v => v.Name == "CC").Open();
-    //             Console.WriteLine("You open valve CC");
-    //         }
-    //
-    //         Console.WriteLine();
-    //     }
-    //
-    //     return total;
-    // }
 
     public static int Part1()
     {
         var valves = GetValves();
         var firstValve = valves.First(v => v.Name == "AA");
 
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
         var possibilities = Step(1, firstValve.Name, new List<Valve>(valves));
-        stopwatch.Stop();
-        Console.WriteLine($"took {stopwatch.Elapsed} to run");
 
         return possibilities.Max();
     }
 
     public static int Part2() => 2;
 
-    private static List<int> Step(int minute, string currentValveName, List<Valve> valves)
+    private static IEnumerable<int> Step(int minute, string name, IReadOnlyCollection<Valve> valves)
     {
-        // Console.WriteLine($"simulating minute {minute}");
-
         var openValves = valves.Where(v => v.State == ValveState.Open).ToList();
         var flowRate = openValves.Sum(v => v.FlowRate);
 
@@ -102,7 +28,7 @@ public static class Day16
         }
 
         var possibilities = new List<int>();
-        var currentValve = valves.First(v => v.Name == currentValveName);
+        var currentValve = valves.First(v => v.Name == name);
 
         // if the current valve is closed, add a possibility where I open it
         if (currentValve.State == ValveState.Closed)
@@ -113,8 +39,7 @@ public static class Day16
             tempValves.Remove(currentValve);
             tempValves.Add(temp);
 
-            possibilities.AddRange(
-                Step(minute + 1, currentValveName, new List<Valve>(tempValves)).Select(x => x + flowRate));
+            possibilities.AddRange(Step(minute + 1, name, new List<Valve>(tempValves)).Select(x => x + flowRate));
         }
 
         // add possibilities to simulate moving to each child
@@ -155,7 +80,7 @@ public static class Day16
         return valves;
     }
 
-    private static void AssignChildren(List<Valve> valves)
+    private static void AssignChildren(IReadOnlyCollection<Valve> valves)
     {
         foreach (var line in Input)
         {
@@ -180,7 +105,9 @@ public static class Day16
         public ValveState State { get; init; } = ValveState.Closed;
         public List<Valve> Children { get; } = new();
 
-        public Valve() { }
+        public Valve()
+        {
+        }
 
         public Valve(Valve other)
         {
