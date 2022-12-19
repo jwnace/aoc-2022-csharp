@@ -4,6 +4,7 @@ public static class Day16
 {
     private static readonly string[] Input = File.ReadAllLines("Day16/day16.txt");
     private static readonly Dictionary<(Valve a, Valve b), int> Distances = new();
+    private static readonly List<Valve> Valves = GetValves();
 
     public static int Part1()
     {
@@ -15,85 +16,58 @@ public static class Day16
 
     public static int Part2() => 2;
 
-    private static int GetHighestScore(Valve start, List<Valve> valves)
+    private static int GetHighestScore(Valve s, List<Valve> v)
     {
-        var queue = new PriorityQueue<Valve, int>();
-        queue.Enqueue(start, 0);
-        var t = 1;
-        var tPrev = t;
-        var score = 0;
+        var scores = new Dictionary<(int t, Valve currentValve, List<Valve> valves, (int t, string Name)[] openValves), int>();
+        scores[(1, s, v, Array.Empty<(int, string)>())] = 0;
 
-        while (t <= 30)
+        var queue = new PriorityQueue<(int t, Valve currentValve, List<Valve> valves, (int t, string Name)[] openValves), int>();
+        queue.Enqueue((1, s, v, Array.Empty<(int, string)>()), 0);
+
+        while (queue.Count > 0)
         {
-            var openValves = valves.Where(v => v.State == ValveState.Open).ToList();
-            var currentFlowRate = openValves.Sum(v => v.FlowRate);
-            score += currentFlowRate * (t - tPrev);
-            tPrev = t;
-
-            if (queue.Count == 0)
-            {
-                t++;
-                continue;
-            }
-
             var node = queue.Dequeue();
+            var (time, valve, valves, openValves) = node;
 
-            Console.WriteLine($"== Minute {t} ==");
-            var openValveString = openValves.Count switch
+            var flowRate = valves.Where(x => openValves.Any(y => x.Name == y.Name)).Sum(x => x.FlowRate);
+
+            if (!scores.ContainsKey(node))
             {
-                0 => "No valves are open",
-                1 => $"Valve {string.Join(", ", openValves)} is open",
-                _ => $"Valves {string.Join(", ", openValves)} are open",
-            };
-            Console.WriteLine($"{openValveString}, releasing {currentFlowRate} pressure.");
-
-            if (node.FlowRate > 0 && node.State == ValveState.Closed)
-            {
-                Console.WriteLine($"You open valve {node.Name}.");
-                node.Open();
-
-                t++;
+                scores[node] = flowRate * (31 - time);
             }
 
-            var query1 = valves
-                .Where(v => v.FlowRate > 0 && v.State == ValveState.Closed)
-                .Select(v => (Valve: v, Distance: GetDistance(node, v)))
+            if (valve.FlowRate > 0 && openValves.All(x => x.Name != valve.Name))
+            {
+                openValves = openValves.Append((time, valve.Name)).ToArray();
+                time++;
+            }
+
+            var query = valves.Where(x => x.FlowRate > 0 && openValves.All(y => y.Name != x.Name))
+                .Select(x => (Valve: x, Distance: GetDistance(valve, x)))
+                .Select(x => (Valve: x.Valve, Distance: x.Distance, PotentialScore: (31 - time - x.Distance - 1) * x.Valve.FlowRate))
                 .ToList();
 
-            if (!query1.Any())
+            foreach (var q in query)
             {
-                t++;
-                continue;
+                var next = (time + q.Distance, q.Valve, new List<Valve>(valves), openValves);
+
+                scores[next] = scores[node] + q.PotentialScore;
+                queue.Enqueue(next, int.MaxValue - q.PotentialScore);
             }
-
-            var query2 = query1.Select(c => (
-                Valve: c.Valve,
-                Distance: c.Distance,
-                // total time, minus current time, minus distance, minus 1 step to turn it on
-                PotentialScore: (31 - t - c.Distance - 1) * c.Valve.FlowRate)
-            ).OrderByDescending(x => x.PotentialScore).ToList();
-
-            var next = query2.MaxBy(v => v.PotentialScore);
-
-            Console.WriteLine($"You move to valve {next.Valve.Name}.");
-            Console.WriteLine();
-
-            queue.Enqueue(next.Valve, int.MaxValue - next.Distance);
-            t += next.Distance;
         }
 
-        return score;
+        return scores.Max(x => x.Value);
     }
 
     private static int GetDistance(Valve a, Valve b)
     {
-        if (Distances.ContainsKey((a, b)))
+        if (Distances.TryGetValue((a, b), out var value))
         {
-            return Distances[(a, b)];
+            return value;
         }
 
-        var distances = new Dictionary<Valve, int>();
-        distances[a] = 0;
+        var distances = new Dictionary<string, int>();
+        distances[a.Name] = 0;
 
         var queue = new PriorityQueue<Valve, int>();
         queue.Enqueue(a, 0);
@@ -104,60 +78,19 @@ public static class Day16
 
             if (node == b)
             {
-                Distances[(a, b)] = distances[b];
-                return distances[b];
+                Distances[(a, b)] = distances[b.Name];
+                return distances[b.Name];
             }
 
-            foreach (var child in node.Children)
+            foreach (var child in node.Children.Where(child => distances.All(d => d.Key != child.Valve.Name)))
             {
-                if (distances.Any(d => d.Key == child.Valve))
-                {
-                    continue;
-                }
-
-                distances[child.Valve] = distances[node] + child.Distance;
+                distances[child.Valve.Name] = distances[node.Name] + child.Distance;
                 queue.Enqueue(child.Valve, child.Distance);
             }
         }
 
-        Distances[(a, b)] = distances[b];
-        return distances[b];
-    }
-
-    private static IEnumerable<int> Step(int minute, string name, IReadOnlyCollection<Valve> valves)
-    {
-        var openValves = valves.Where(v => v.State == ValveState.Open).ToList();
-        var flowRate = openValves.Sum(v => v.FlowRate);
-
-        if (minute == 30)
-        {
-            // there is only one possibility for minute 30, we don't have time to move anywhere or open any valves
-            return new List<int> { flowRate };
-        }
-
-        var possibilities = new List<int>();
-        var currentValve = valves.First(v => v.Name == name);
-
-        // if the current valve is closed, add a possibility where I open it
-        if (currentValve.State == ValveState.Closed)
-        {
-            // HACK: this seems to work but I hate it... there has to be a better way to go about this...
-            var temp = currentValve with { State = ValveState.Open };
-            var tempValves = new List<Valve>(valves);
-            tempValves.Remove(currentValve);
-            tempValves.Add(temp);
-
-            possibilities.AddRange(Step(minute + 1, name, new List<Valve>(tempValves)).Select(x => x + flowRate));
-        }
-
-        // add possibilities to simulate moving to each child
-        foreach (var child in currentValve.Children)
-        {
-            possibilities.AddRange(
-                Step(minute + 1, child.Valve.Name, new List<Valve>(valves)).Select(x => x + flowRate));
-        }
-
-        return possibilities;
+        Distances[(a, b)] = distances[b.Name];
+        return distances[b.Name];
     }
 
     private static List<Valve> GetValves()
@@ -191,7 +124,7 @@ public static class Day16
         return valves;
     }
 
-    private static void AssignChildren(List<Valve> valves)
+    private static void AssignChildren(IReadOnlyCollection<Valve> valves)
     {
         foreach (var line in Input)
         {
@@ -226,9 +159,9 @@ public static class Day16
                     childrenToAdd.AddRange(
                         child.Valve.Children
                             .Where(c => c.Valve != valve)
-                            .Where(c => !valve.Children.Any(v => v.Valve == c.Valve))
-                            .Where(c => !seen.Any(s => s == c.Valve))
-                            .Select(x => (x.Valve, x.Distance + 1)));
+                            .Where(c => valve.Children.All(v => v.Valve != c.Valve))
+                            .Where(c => seen.All(s => s != c.Valve))
+                            .Select(c => (c.Valve, child.Distance + c.Distance)));
                 }
 
                 valve.Children.RemoveAll(c => childrenToRemove.Contains(c));
@@ -239,35 +172,10 @@ public static class Day16
 
     private record Valve
     {
-        public string Name { get; init; }
+        public string Name { get; init; } = "";
         public int FlowRate { get; init; }
-        public ValveState State { get; set; } = ValveState.Closed;
         public List<(Valve Valve, int Distance)> Children { get; } = new();
 
-        public Valve()
-        {
-        }
-
-        public Valve(Valve other)
-        {
-            Name = other.Name;
-            FlowRate = other.FlowRate;
-            State = other.State;
-            // TODO: is this going to be a problem because the children are the same instances across the board?
-            Children = new List<(Valve Valve, int Distance)>(other.Children);
-        }
-
-        public void Open()
-        {
-            State = ValveState.Open;
-        }
-
         public override string ToString() => Name;
-    }
-
-    private enum ValveState
-    {
-        Closed,
-        Open
     }
 }
