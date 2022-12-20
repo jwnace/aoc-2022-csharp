@@ -1,4 +1,6 @@
-﻿namespace aoc_2022_csharp.Day16;
+﻿using System.Diagnostics;
+
+namespace aoc_2022_csharp.Day16;
 
 public static class Day16
 {
@@ -8,48 +10,122 @@ public static class Day16
 
     public static int Part1()
     {
-        var valves = GetValves();
-        var start = valves.First(v => v.Name == "AA");
-
-        return GetHighestScore(start, valves);
+        return MaxFlow("AA", "", 30);
     }
 
-    public static int Part2() => 2;
-
-    private static int GetHighestScore(Valve s, List<Valve> v)
+    private static int MaxFlow(string cur, string opened, int minutesLeft)
     {
-        var scores = new Dictionary<(int t, Valve currentValve, List<Valve> valves, (int t, string Name)[] openValves), int>();
-        scores[(1, s, v, Array.Empty<(int, string)>())] = 0;
+        var key = (cur, opened, minutesLeft);
 
-        var queue = new PriorityQueue<(int t, Valve currentValve, List<Valve> valves, (int t, string Name)[] openValves), int>();
-        queue.Enqueue((1, s, v, Array.Empty<(int, string)>()), 0);
+        if (Memo.TryGetValue(key, out var value))
+        {
+            return value;
+        }
+
+        if (minutesLeft <= 0)
+        {
+            return 0;
+        }
+
+        var best = 0;
+        var valve = Valves.First(x => x.Name == cur);
+        var val = (minutesLeft - 1) * valve.FlowRate;
+        var curOpened = opened.Length > 0 ? string.Join(',', opened.Split(',').Append(cur).Order()) : cur;
+
+        foreach (var child in valve.Children)
+        {
+            if (!opened.Contains(cur) && val > 0)
+            {
+                best = Math.Max(best, val + MaxFlow(child.Valve.Name, curOpened, minutesLeft - 2));
+            }
+
+            best = Math.Max(best, MaxFlow(child.Valve.Name, opened, minutesLeft - 1));
+        }
+
+        Memo[key] = best;
+        return best;
+    }
+
+    public static int Part2()
+    {
+        // Memo = new();
+        // var a = MaxFlow("AA", "", 26, out _);
+        // Memo = new();
+        // var b = MaxFlow("AA", "BB,CC,DD,HH,JJ", 26, out _);
+
+        // return a + b;
+
+        return 2;
+    }
+
+    private static Dictionary<(string cur, string opened, int minutesLeft), int> Memo = new();
+
+    public static int Part1_Mine()
+    {
+        var start = Valves.First(v => v.Name == "AA");
+
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
+        var answer = GetHighestScore(start);
+
+        stopwatch.Stop();
+        Console.WriteLine($"GetHighestScore took {stopwatch.Elapsed} to run!");
+
+        return answer;
+    }
+
+    private static int GetHighestScore(Valve start)
+    {
+        var seen = new HashSet<(int t, string currentValve, string openValves)>();
+
+        var scores = new Dictionary<(int t, string currentValve, string openValves), int>();
+        scores[(1, start.Name, "")] = 0;
+
+        var queue = new PriorityQueue<(int t, string currentValve, string openValves), int>();
+        queue.Enqueue((1, start.Name, ""), 0);
 
         while (queue.Count > 0)
         {
-            var node = queue.Dequeue();
-            var (time, valve, valves, openValves) = node;
+            if (scores.Count % 100_000 == 0)
+            {
+                Console.WriteLine($"scores: {scores.Count}, queue: {queue.Count}");
+            }
 
-            var flowRate = valves.Where(x => openValves.Any(y => x.Name == y.Name)).Sum(x => x.FlowRate);
+            var node = queue.Dequeue();
+
+            if (seen.Contains(node))
+            {
+                continue;
+            }
+
+            seen.Add(node);
+
+            var (time, valveName, openValves) = node;
+            var valve = Valves.First(x => x.Name == valveName);
+            var flowRate = Valves.Where(x => openValves.Contains(x.Name)).Sum(x => x.FlowRate);
 
             if (!scores.ContainsKey(node))
             {
                 scores[node] = flowRate * (31 - time);
             }
 
-            if (valve.FlowRate > 0 && openValves.All(x => x.Name != valve.Name))
+            if (valve.FlowRate > 0 && !openValves.Contains(valveName))
             {
-                openValves = openValves.Append((time, valve.Name)).ToArray();
+                openValves = openValves.Length > 0 ? string.Join(',', openValves, valveName) : valveName;
                 time++;
             }
 
-            var query = valves.Where(x => x.FlowRate > 0 && openValves.All(y => y.Name != x.Name))
+            var query = Valves.Where(x => x.FlowRate > 0 && !openValves.Contains(x.Name))
                 .Select(x => (Valve: x, Distance: GetDistance(valve, x)))
-                .Select(x => (Valve: x.Valve, Distance: x.Distance, PotentialScore: (31 - time - x.Distance - 1) * x.Valve.FlowRate))
-                .ToList();
+                .Select(x => (Valve: x.Valve, Distance: x.Distance,
+                    PotentialScore: (31 - time - x.Distance - 1) * x.Valve.FlowRate))
+                .OrderByDescending(x => x.PotentialScore)
+                .Take(4);
 
             foreach (var q in query)
             {
-                var next = (time + q.Distance, q.Valve, new List<Valve>(valves), openValves);
+                var next = (time + q.Distance, q.Valve.Name, openValves);
 
                 scores[next] = scores[node] + q.PotentialScore;
                 queue.Enqueue(next, int.MaxValue - q.PotentialScore);
@@ -99,7 +175,7 @@ public static class Day16
 
         AssignChildren(valves);
 
-        PruneChildren(valves);
+        // PruneChildren(valves);
 
         return valves;
     }
