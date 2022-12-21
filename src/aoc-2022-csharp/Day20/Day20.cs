@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace aoc_2022_csharp.Day20;
+﻿namespace aoc_2022_csharp.Day20;
 
 public static class Day20
 {
@@ -11,164 +9,23 @@ public static class Day20
 
     public static long Part1()
     {
-        var nodes = new List<Node>();
+        var nodes = BuildLinkedList(1);
 
-        foreach (var item in Input)
-        {
-            var node = new Node
-            {
-                OriginalIndex = item.OriginalIndex,
-                Number = item.Number
-            };
+        Mix(nodes, 1);
 
-            var left = nodes.LastOrDefault();
-
-            if (left is not null)
-            {
-                node.Left = left;
-                left.Right = node;
-            }
-
-            nodes.Add(node);
-        }
-
-        var first = nodes.First();
-        var last = nodes.Last();
-
-        first.Left = last;
-        last.Right = first;
-
-        for (var i = Input.Min(x => x.OriginalIndex); i <= Input.Max(x => x.OriginalIndex); i++)
-        {
-            var item = nodes.First(x => x.OriginalIndex == i);
-            var number = item.Number;
-
-            if (number > 0)
-            {
-                // move right
-                for (var j = 0; j < number; j++)
-                {
-                    var a = item.Left;
-                    var b = item;
-                    var c = item.Right;
-                    var d = item.Right.Right;
-
-                    a.Right = c;
-
-                    b.Left = c;
-                    b.Right = d;
-
-                    c.Left = a;
-                    c.Right = b;
-
-                    d.Left = b;
-                }
-            }
-            else if (number < 0)
-            {
-                // move left
-                for (var j = 0; j < -number; j++)
-                {
-                    var a = item.Left.Left;
-                    var b = item.Left;
-                    var c = item;
-                    var d = item.Right;
-
-                    a.Right = c;
-
-                    b.Left = c;
-                    b.Right = d;
-
-                    c.Left = a;
-                    c.Right = b;
-
-                    d.Left = b;
-                }
-            }
-        }
-
-        var start = nodes.Single(n => n.Number == 0);
-        var temp = start;
-
-        for (var k = 0; k < 1000; k++)
-        {
-            temp = temp.Right;
-        }
-
-        Console.WriteLine($"1000th number: {temp.Number}");
-        var n1 = temp.Number;
-
-        for (var k = 0; k < 1000; k++)
-        {
-            temp = temp.Right;
-        }
-
-        Console.WriteLine($"2000th number: {temp.Number}");
-        var n2 = temp.Number;
-
-        for (var k = 0; k < 1000; k++)
-        {
-            temp = temp.Right;
-        }
-
-        Console.WriteLine($"3000th number: {temp.Number}");
-        var n3 = temp.Number;
-
-        return n1 + n2 + n3;
+        return CalculateResult(nodes);
     }
 
     public static long Part2()
     {
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
+        var nodes = BuildLinkedList(811_589_153);
 
-        // build the list
-        var nodes = BuildLinkedList();
-
-        stopwatch.Stop();
-        Console.WriteLine($"building the linked list took {stopwatch.Elapsed}");
-        stopwatch.Reset();
-
-        stopwatch.Start();
-
-        // mix the list
         Mix(nodes, 10);
 
-        stopwatch.Stop();
-        Console.WriteLine($"mixing the list took {stopwatch.Elapsed}");
-        stopwatch.Reset();
-
-        var start = nodes.Single(n => n.Number == 0);
-        var temp = start;
-
-        for (var k = 0; k < 1000; k++)
-        {
-            temp = temp.Right;
-        }
-
-        Console.WriteLine($"1000th number: {temp.Number}");
-        var n1 = temp.Number;
-
-        for (var k = 0; k < 1000; k++)
-        {
-            temp = temp.Right;
-        }
-
-        Console.WriteLine($"2000th number: {temp.Number}");
-        var n2 = temp.Number;
-
-        for (var k = 0; k < 1000; k++)
-        {
-            temp = temp.Right;
-        }
-
-        Console.WriteLine($"3000th number: {temp.Number}");
-        var n3 = temp.Number;
-
-        return n1 + n2 + n3;
+        return CalculateResult(nodes);
     }
 
-    private static List<Node> BuildLinkedList()
+    private static List<Node> BuildLinkedList(long multiplier)
     {
         var nodes = new List<Node>();
 
@@ -176,8 +33,8 @@ public static class Day20
         {
             var node = new Node
             {
+                Number = item.Number * multiplier,
                 OriginalIndex = item.OriginalIndex,
-                Number = item.Number * 811_589_153
             };
 
             var left = nodes.LastOrDefault();
@@ -191,81 +48,91 @@ public static class Day20
             nodes.Add(node);
         }
 
-        var first = nodes.First();
-        var last = nodes.Last();
+        nodes.First().Left = nodes.Last();
+        nodes.Last().Right = nodes.First();
 
-        first.Left = last;
-        last.Right = first;
         return nodes;
     }
 
-    private static void Mix(List<Node> nodes, int t)
+    private static void Mix(IReadOnlyCollection<Node> nodes, int timesToMix)
     {
-        for (var times = 0; times < t; times++)
+        for (var t = 0; t < timesToMix; t++)
         {
-            Console.WriteLine($"mixing the list, {times + 1} / {t} times");
+            Mix(nodes);
+        }
+    }
 
-            var min = Input.Min(x => x.OriginalIndex);
-            var max = Input.Max(x => x.OriginalIndex);
+    private static void Mix(IReadOnlyCollection<Node> nodes)
+    {
+        var max = Input.Max(x => x.OriginalIndex);
 
-            for (var i = min; i <= max; i++)
+        for (var i = 0; i <= max; i++)
+        {
+            var node = nodes.First(x => x.OriginalIndex == i);
+            var number = node.Number % max;
+
+            switch (number)
             {
-                Console.WriteLine($"    {i} / {max} => {Math.Round((double)i / max * 100.0, 2)}%");
-
-                var item = nodes.First(x => x.OriginalIndex == i);
-                var number = item.Number % max;
-
-                if (number > 0)
-                {
-                    // move right
-                    for (var j = 0; j < number; j++)
-                    {
-                        var a = item.Left;
-                        var b = item;
-                        var c = item.Right;
-                        var d = item.Right.Right;
-
-                        a.Right = c;
-
-                        b.Left = c;
-                        b.Right = d;
-
-                        c.Left = a;
-                        c.Right = b;
-
-                        d.Left = b;
-                    }
-                }
-                else if (number < 0)
-                {
-                    // move left
-                    for (var j = 0; j < -number; j++)
-                    {
-                        var a = item.Left.Left;
-                        var b = item.Left;
-                        var c = item;
-                        var d = item.Right;
-
-                        a.Right = c;
-
-                        b.Left = c;
-                        b.Right = d;
-
-                        c.Left = a;
-                        c.Right = b;
-
-                        d.Left = b;
-                    }
-                }
+                case > 0:
+                    MoveRight(node, number);
+                    break;
+                case < 0:
+                    MoveLeft(node, number);
+                    break;
             }
         }
     }
 
+    private static void MoveLeft(Node node, long number)
+    {
+        for (var j = 0; j < -number; j++)
+        {
+            Swap(node.Left, node);
+        }
+    }
+
+    private static void MoveRight(Node node, long number)
+    {
+        for (var j = 0; j < number; j++)
+        {
+            Swap(node, node.Right);
+        }
+    }
+
+    private static void Swap(Node left, Node right)
+    {
+        var (a, b, c, d) = (left.Left, left, right, right.Right);
+
+        a.Right = right;
+        b.Left = right;
+        b.Right = d;
+        c.Left = a;
+        c.Right = left;
+        d.Left = left;
+    }
+
+    private static long CalculateResult(IEnumerable<Node> nodes)
+    {
+        var node = nodes.Single(n => n.Number == 0);
+        var numbers = new List<long>();
+
+        for (var k = 1; k <= 3000; k++)
+        {
+            node = node.Right;
+
+            if (k % 1000 == 0)
+            {
+                numbers.Add(node.Number);
+            }
+        }
+
+        return numbers.Sum();
+    }
+
     private class Node
     {
-        public long Number { get; set; }
-        public int OriginalIndex { get; set; }
-
+        public long Number { get; init; }
+        public int OriginalIndex { get; init; }
         public Node Left { get; set; }
         public Node Right { get; set; }
     }
