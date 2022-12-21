@@ -10,9 +10,35 @@ public static class Day21
 
         PopulateMonkeys(monkeys);
 
-        var root = monkeys.First(m => m.Name == "root");
+        return monkeys.First(m => m.Name == "root").GetValue();
+    }
 
-        return root.GetValue();
+    public static long Part2()
+    {
+        var monkeys = GetMonkeys();
+
+        PopulateMonkeys(monkeys);
+
+        var root = monkeys.First(m => m.Name == "root");
+        var human = monkeys.First(m => m.Name == "humn");
+
+        human.Number = 3_665_520_865_000;
+
+        while (true)
+        {
+            var left = root.Left.GetValue();
+            var right = root.Right.GetValue();
+
+            if (left == right)
+            {
+                return human.Number!.Value;
+            }
+
+            var diff = Math.Abs(left - right);
+            // Console.WriteLine($"humn: {human.Number}, diff: {diff}");
+
+            human.Number++;
+        }
     }
 
     private static void PopulateMonkeys(List<Monkey> monkeys)
@@ -59,8 +85,6 @@ public static class Day21
 
         return monkeys;
     }
-
-    public static long Part2() => 2;
 
     private class Monkey
     {
