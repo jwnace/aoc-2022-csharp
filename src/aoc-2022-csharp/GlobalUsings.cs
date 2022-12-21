@@ -17,3 +17,4 @@ global using aoc_2022_csharp.Day17;
 global using aoc_2022_csharp.Day18;
 global using aoc_2022_csharp.Day19;
 global using aoc_2022_csharp.Day20;
+global using aoc_2022_csharp.Day21;
