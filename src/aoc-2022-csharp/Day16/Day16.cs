@@ -1,294 +1,140 @@
-﻿using System.Diagnostics;
-
-namespace aoc_2022_csharp.Day16;
+﻿namespace aoc_2022_csharp.Day16;
 
 public static class Day16
 {
     private static readonly string[] Input = File.ReadAllLines("Day16/day16.txt");
     private static readonly List<Valve> Valves = GetValves();
-    private static readonly Dictionary<(string cur, string opened, int minutesLeft), int> Memo = new();
+    private static readonly Dictionary<(string, string, int), int> MemoPart1 = new();
+    private static readonly Dictionary<(string, string, string, int), int> MemoPart2 = new();
 
-    public static int Part1()
+    public static int Part1() => MaxScorePart1("AA", "", 30);
+
+    public static int Part2() => MaxScorePart2("AA", "AA", "", 26);
+
+    private static int MaxScorePart1(string player1, string openValves, int timeLeft)
     {
-        Memo.Clear();
+        var state = (player1, openValves, timeLeft);
 
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-        MaxScoreRecursive("AA", "", 30);
-        var recursive = Memo.Max(m => m.Value);
-        var top10ScoresRecursive = Memo.OrderByDescending(m => m.Value).Take(10).ToList();
-        var query = Memo.OrderByDescending(m => m.Key.minutesLeft).ThenBy(m => m.Key.cur).Take(100).ToList();
-        stopwatch.Stop();
-        Console.WriteLine($"MaxScoreRecursive took {stopwatch.Elapsed} to run! Result: {recursive}");
-
-        stopwatch.Reset();
-        stopwatch.Start();
-        var bfs = MaxScoreBfs(("AA", "", 30));
-        stopwatch.Stop();
-        Console.WriteLine($"MaxScoreBfs took {stopwatch.Elapsed} to run! Result: {bfs}");
-
-        return 1;
-    }
-
-    public static int Part2()
-    {
-        Memo.Clear();
-
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-        MaxScoreRecursive("AA", "", 26);
-        var recursive = Memo.Max(m => m.Value);
-        var top10ScoresRecursive = Memo.OrderByDescending(m => m.Value).Take(10).ToList();
-        var query = Memo.OrderByDescending(m => m.Key.minutesLeft).ThenBy(m => m.Key.cur).Take(100).ToList();
-        stopwatch.Stop();
-        Console.WriteLine($"MaxScoreRecursive took {stopwatch.Elapsed} to run! Result: {recursive}");
-
-        stopwatch.Reset();
-        stopwatch.Start();
-        var bfs = MaxScoreBfs(("AA", "", 26));
-        stopwatch.Stop();
-        Console.WriteLine($"MaxScoreBfs took {stopwatch.Elapsed} to run! Result: {bfs}");
-
-        stopwatch.Reset();
-        stopwatch.Start();
-        var elephant = MaxScoreBfs(("AA", "BB,CC,DD,EE,HH,JJ", 26));
-        stopwatch.Stop();
-        Console.WriteLine($"Elephant took {stopwatch.Elapsed} to run! Result: {elephant}");
-
-        return 2;
-    }
-
-    private static int MaxScoreRecursive(string currentValve, string openedValves, int minutesLeft)
-    {
-        // this is the state we are currently in
-        var state = (currentValve, openedValves, minutesLeft);
-
-        // if we've already seen this state before, return the value we got last time
-        if (Memo.TryGetValue(state, out var value))
+        if (MemoPart1.TryGetValue(state, out var value))
         {
             return value;
         }
 
-        // if there's no time left, return 0
-        if (minutesLeft <= 0)
+        if (timeLeft <= 0)
         {
             return 0;
         }
 
-        // valve is the valve we are currently looking at
-        var valve = Valves.First(x => x.Name == currentValve);
-
-        // still not sure what this is...
-        var best = 0;
-
-        // this is the value that we could add to our score if we open the current valve on this turn
-        // this is NOT the score for the current state
-        var val = (minutesLeft - 1) * valve.FlowRate;
-
-        // this is the list of valves that would be open on the next turn if we open the current valve on this turn
-        var curOpened = openedValves.Length > 0
-            ? string.Join(',', openedValves.Split(',').Append(currentValve).Order())
-            : currentValve;
-
-        // for each neighbor of the current valve
-        foreach (var neighbor in valve.Neighbors)
+        if (Valves.All(v => v.FlowRate == 0 || openValves.Contains(v.Name)))
         {
-            // if the current valve is already open, or has a a flow rate of 0, don't try to open it
-            if (!openedValves.Contains(currentValve) && val > 0)
-            {
-                // minutesLeft - 2 because it takes 1 minute to open the valve, and 1 minute to move to the next valve
-                var temp = val + MaxScoreRecursive(neighbor.Name, curOpened, minutesLeft - 2);
-                if (best > temp)
-                {
-                    // this can happen because we're considering every neighbor,
-                    // and updating `best` with the best neighbor's score
-                    var foo = "wtf, how did we get here?";
-                }
-
-                best = Math.Max(best, temp);
-            }
-
-            // minutesLeft - 1 because it takes 1 minute to move to the next valve, and we didn't open anything
-                best = Math.Max(best, 000 + MaxScoreRecursive(neighbor.Name, openedValves, minutesLeft - 1));
+            return 0;
         }
 
-        // save the score for this state so we don't calculate it again
-        Memo[state] = best;
+        var best = 0;
+        var p1Valve = Valves.First(x => x.Name == player1);
+        var p1Val = (timeLeft - 1) * p1Valve.FlowRate;
 
-        // return the score back to the previous call on the call stack
+        if (!openValves.Contains(player1) && p1Valve.FlowRate > 0)
+        {
+            var p1Opened = openValves.Length > 0
+                ? string.Join(',', openValves.Split(',').Append(player1).Order())
+                : player1;
+
+            best = Math.Max(best, p1Val + MaxScorePart1(player1, p1Opened, timeLeft - 1));
+        }
+
+        foreach (var p1Neighbor in p1Valve.Neighbors)
+        {
+            best = Math.Max(best, MaxScorePart1(p1Neighbor.Name, openValves, timeLeft - 1));
+        }
+
+        MemoPart1[state] = best;
         return best;
     }
 
-    private static int MaxScoreBfs((string, string, int) initialState)
+    private static int MaxScorePart2(string player1, string player2, string openValves, int timeLeft)
     {
-        // this is a queue of states that we still need to consider
-        var queue = new Queue<(string, string, int)>();
-        queue.Enqueue(initialState);
+        var state = (player1, player2, openValves, timeLeft);
 
-        // this is a memo of all the states we've already calculated scores for
-        var scores = new Dictionary<(string CurrentValve, string OpenedValves, int TimeLeft), (int FlowRate, int Score)>();
-        scores[initialState] = (0,0);
-
-        // this is a collection of all the states we've already visited
-        var seen = new HashSet<(string, string, int)>();
-
-        while (queue.Count > 0)
+        if (MemoPart2.TryGetValue(state, out var value))
         {
-            // this is the state we are currently in
-            var state = queue.Dequeue();
+            return value;
+        }
 
-            // if we've already seen this state before, don't process it again
-            if (seen.Contains(state))
+        if (timeLeft <= 0)
+        {
+            return 0;
+        }
+
+        if (Valves.All(v => v.FlowRate == 0 || openValves.Contains(v.Name)))
+        {
+            return 0;
+        }
+
+        // TODO: remove hard coded timeLeft value
+        if (player1 == player2 && timeLeft < 26)
+        {
+            return 0;
+        }
+
+        // TODO: are there other states that I can prune to make this run faster?
+
+        var best = 0;
+        var p1Valve = Valves.First(v => v.Name == player1);
+        var p2Valve = Valves.First(v => v.Name == player2);
+        var p1Val = (timeLeft - 1) * p1Valve.FlowRate;
+        var p2Val = (timeLeft - 1) * p2Valve.FlowRate;
+
+        if ((!openValves.Contains(player1) && p1Valve.FlowRate > 0) &&
+            (!openValves.Contains(player2) && p2Valve.FlowRate > 0))
+        {
+            var bothOpened = openValves.Length > 0
+                ? string.Join(',', openValves.Split(',').Append(player1).Append(player2).Order())
+                : string.Join(',', new[] { player1, player2 }.Order());
+
+            best = Math.Max(best, p1Val + p2Val + MaxScorePart2(player1, player2, bothOpened, timeLeft - 1));
+        }
+
+        if (!openValves.Contains(player1) && p1Valve.FlowRate > 0)
+        {
+            var p1Opened = openValves.Length > 0
+                ? string.Join(',', openValves.Split(',').Append(player1).Order())
+                : player1;
+
+            foreach (var p2Neighbor in p2Valve.Neighbors)
             {
-                continue;
-            }
-
-            // mark this state as "seen"
-            seen.Add(state);
-
-            if (state is { Item1: "EE", Item2: "BB,DD,JJ", Item3: 17 })
-            {
-                var foo = "break here!";
-            }
-
-            // this is (another representation of) the state we are currently in
-            var (currentValveName, openedValves, minutesLeft) = state;
-
-            // if there's no time left, don't do anything, the score for this state should already be finalized
-            // HACK: since we compute the score for the NEXT state, we need to make sure that we don't compute a score
-            // for -1 minutes left, it should stop at 0 minutes left
-            if (minutesLeft == 1)
-            {
-                continue;
-            }
-
-            // TODO: calculate the score for the current state AND the next state...
-            // TODO: I'm not exactly clear on how to do that
-
-            // valve is the valve we are currently looking at
-            var valve = Valves.First(v => v.Name == currentValveName);
-
-            // we have two things we can do in this minute...
-            // we can open the current valve, or we can move to a neighbor
-
-            // open the current valve (if it's not already open, and it has a non-zero flow rate)
-            if (!openedValves.Contains(currentValveName) && valve.FlowRate > 0)
-            {
-                var currentOpened = openedValves.Length > 0
-                    ? string.Join(',', openedValves.Split(',').Append(currentValveName).Order())
-                    : currentValveName;
-
-                var nextState = (currentValveName, currentOpened, minutesLeft - 1);
-
-                var flowRate = GetFlowRate(currentOpened);
-                var previousScore = scores[state].Score;
-                var score = previousScore + flowRate;
-
-                if (scores.ContainsKey(nextState))
-                {
-                    score = Math.Max(score, scores[nextState].Score);
-                    scores[nextState] = (flowRate, score);
-                }
-                else
-                {
-                    scores[nextState] = (flowRate, score);
-                }
-
-                queue.Enqueue(nextState);
-            }
-
-            // don't use else block here because we need to consider the case where opening the valve is a bad choice
-            {
-                // move to each neighbor
-                foreach (var neighbor in valve.Neighbors)
-                {
-                    var nextState = (neighbor.Name, openedValves, minutesLeft - 1);
-
-                    if (nextState is { Item1: "AA", Item2: "BB,DD", Item3: 24 })
-                    {
-                        var bar = "break here!";
-                    }
-
-                    var flowRate = GetFlowRate(openedValves);
-                    var previousScore = scores[state].Score;
-                    var score = previousScore + flowRate;
-
-                    if (scores.ContainsKey(nextState))
-                    {
-                        score = Math.Max(score, scores[nextState].Score);
-                        scores[nextState] = (flowRate, score);
-                    }
-                    else
-                    {
-                        scores[nextState] = (flowRate, score);
-                    }
-
-                    queue.Enqueue(nextState);
-                }
+                best = Math.Max(best, p1Val + MaxScorePart2(player1, p2Neighbor.Name, p1Opened, timeLeft - 1));
             }
         }
 
-        var top10ScoresRecursive = Memo.OrderByDescending(m => m.Value).Take(10).ToList();
-        var queryRecursive = Memo
-            .OrderByDescending(m => m.Key.minutesLeft)
-            .ThenBy(m => m.Key.cur)
-            // .Take(100)
-            .ToList();
+        if (!openValves.Contains(player2) && p2Valve.FlowRate > 0)
+        {
+            var p2Opened = openValves.Length > 0
+                ? string.Join(',', openValves.Split(',').Append(player2).Order())
+                : player2;
 
-        var top10ScoresBfs = scores.OrderByDescending(m => m.Value).Take(10).ToList();
-        var queryBfs = scores
-            .OrderByDescending(m => m.Key.Item3)
-            .ThenBy(m => m.Key.Item1)
-            // .Take(100)
-            .ToList();
+            foreach (var p1Neighbor in p1Valve.Neighbors)
+            {
+                best = Math.Max(best, p2Val + MaxScorePart2(p1Neighbor.Name, player2, p2Opened, timeLeft - 1));
+            }
+        }
 
-        var temp01 = scores.SingleOrDefault(s => s.Key is { Item1: "AA", Item2: "", Item3: 30 });
-        var temp02 = scores.SingleOrDefault(s => s.Key is { Item1: "DD", Item2: "", Item3: 29 });
-        var temp03 = scores.SingleOrDefault(s => s.Key is { Item1: "DD", Item2: "DD", Item3: 28 });
-        var temp04 = scores.SingleOrDefault(s => s.Key is { Item1: "CC", Item2: "DD", Item3: 27 });
-        var temp05 = scores.SingleOrDefault(s => s.Key is { Item1: "BB", Item2: "DD", Item3: 26 });
-        var temp06 = scores.SingleOrDefault(s => s.Key is { Item1: "BB", Item2: "BB,DD", Item3: 25 });
-        var temp07 = scores.SingleOrDefault(s => s.Key is { Item1: "AA", Item2: "BB,DD", Item3: 24 });
-        var temp08 = scores.SingleOrDefault(s => s.Key is { Item1: "II", Item2: "BB,DD", Item3: 23 });
-        var temp09 = scores.SingleOrDefault(s => s.Key is { Item1: "JJ", Item2: "BB,DD", Item3: 22 });
-        var temp10 = scores.SingleOrDefault(s => s.Key is { Item1: "JJ", Item2: "BB,DD,JJ", Item3: 21 });
-        var temp11 = scores.SingleOrDefault(s => s.Key is { Item1: "II", Item2: "BB,DD,JJ", Item3: 20 });
-        var temp12 = scores.SingleOrDefault(s => s.Key is { Item1: "AA", Item2: "BB,DD,JJ", Item3: 19 });
-        var temp13 = scores.SingleOrDefault(s => s.Key is { Item1: "DD", Item2: "BB,DD,JJ", Item3: 18 });
-        var temp14 = scores.SingleOrDefault(s => s.Key is { Item1: "EE", Item2: "BB,DD,JJ", Item3: 17 });
-        var temp15 = scores.SingleOrDefault(s => s.Key is { Item1: "FF", Item2: "BB,DD,JJ", Item3: 16 });
-        var temp16 = scores.SingleOrDefault(s => s.Key is { Item1: "GG", Item2: "BB,DD,JJ", Item3: 15 });
-        var temp17 = scores.SingleOrDefault(s => s.Key is { Item1: "HH", Item2: "BB,DD,JJ", Item3: 14 });
-        var temp18 = scores.SingleOrDefault(s => s.Key is { Item1: "HH", Item2: "BB,DD,HH,JJ", Item3: 13 });
-        var temp19 = scores.SingleOrDefault(s => s.Key is { Item1: "GG", Item2: "BB,DD,HH,JJ", Item3: 12 });
-        var temp20 = scores.SingleOrDefault(s => s.Key is { Item1: "FF", Item2: "BB,DD,HH,JJ", Item3: 11 });
-        var temp21 = scores.SingleOrDefault(s => s.Key is { Item1: "EE", Item2: "BB,DD,HH,JJ", Item3: 10 });
-        var temp22 = scores.SingleOrDefault(s => s.Key is { Item1: "EE", Item2: "BB,DD,EE,HH,JJ", Item3: 9 });
-        var temp23 = scores.SingleOrDefault(s => s.Key is { Item1: "DD", Item2: "BB,DD,EE,HH,JJ", Item3: 8 });
-        var temp24 = scores.SingleOrDefault(s => s.Key is { Item1: "CC", Item2: "BB,DD,EE,HH,JJ", Item3: 7 });
-        var temp25 = scores.SingleOrDefault(s => s.Key is { Item1: "CC", Item2: "BB,CC,DD,EE,HH,JJ", Item3: 6 });
-        var temp26 = scores.Where(s => s.Key is { Item2: "BB,CC,DD,EE,HH,JJ", Item3: 5 }).ToList();
-        var temp27 = scores.Where(s => s.Key is { Item2: "BB,CC,DD,EE,HH,JJ", Item3: 4 }).ToList();
-        var temp28 = scores.Where(s => s.Key is { Item2: "BB,CC,DD,EE,HH,JJ", Item3: 3 }).ToList();
-        var temp29 = scores.Where(s => s.Key is { Item2: "BB,CC,DD,EE,HH,JJ", Item3: 2 }).ToList();
-        var temp30 = scores.Where(s => s.Key is { Item2: "BB,CC,DD,EE,HH,JJ", Item3: 1 }).ToList();
-        var temp31 = scores.Where(s => s.Key is { Item2: "BB,CC,DD,EE,HH,JJ", Item3: 0 }).ToList();
+        foreach (var p1Neighbor in p1Valve.Neighbors)
+        {
+            foreach (var p2Neighbor in p2Valve.Neighbors)
+            {
+                best = Math.Max(best, MaxScorePart2(p1Neighbor.Name, p2Neighbor.Name, openValves, timeLeft - 1));
+            }
+        }
 
-        var query = scores.OrderByDescending(s => s.Value.Score).ToList();
-        return scores.Max(s => s.Value.Score);
-    }
-
-    private static int GetFlowRate(string openedValves)
-    {
-        return Valves.Where(v => openedValves.Contains(v.Name)).Sum(v => v.FlowRate);
+        MemoPart2[state] = best;
+        return best;
     }
 
     private static List<Valve> GetValves()
     {
         var valves = CreateValves();
         AssignNeighbors(valves);
-        // PruneNeighbors(valves);
-
         return valves;
     }
 
@@ -323,8 +169,7 @@ public static class Day16
 
             foreach (var neighbor in neighbors)
             {
-                var c = valves.First(v => v.Name == neighbor);
-                valve.Neighbors.Add(c);
+                valve.Neighbors.Add(valves.First(v => v.Name == neighbor));
             }
         }
     }
