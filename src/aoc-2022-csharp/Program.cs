@@ -40,5 +40,7 @@
 // Console.WriteLine($"Day 20, Part 2: {Day20.Part2()}");
 // Console.WriteLine($"Day 21, Part 1: {Day21.Part1()}");
 // Console.WriteLine($"Day 21, Part 2: {Day21.Part2()}");
-Console.WriteLine($"Day 22, Part 1: {Day22.Part1()}");
-Console.WriteLine($"Day 22, Part 2: {Day22.Part2()}");
+// Console.WriteLine($"Day 22, Part 1: {Day22.Part1()}");
+// Console.WriteLine($"Day 22, Part 2: {Day22.Part2()}");
+Console.WriteLine($"Day 23, Part 1: {Day23.Part1()}");
+Console.WriteLine($"Day 23, Part 2: {Day23.Part2()}");
