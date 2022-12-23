@@ -4,123 +4,57 @@ public static class Day23
 {
     private static readonly string[] Input = File.ReadAllLines("Day23/day23.txt");
 
-    public static int Part1()
+    public static int Part1() => Solve(1);
+
+    public static int Part2() => Solve(2);
+
+    private static int Solve(int part)
     {
         var map = GetMap();
+        var rounds = part == 2 ? int.MaxValue : 10;
 
-        // Console.WriteLine("== Initial State ==" );
-        // DrawMap(map);
-        // Console.WriteLine();
-
-        for (var round = 0; round < 10; round++)
+        for (var round = 0; round < rounds; round++)
         {
-            var proposedMoves = GetProposedMoves(map, round);
+            var moves = GetProposedMoves(map, round).ToList();
+            RemoveRejectedMoves(moves);
 
-            var rejectedMoves = proposedMoves
-                .GroupBy(move => move.Position)
-                .Select(group => (Position: group.Key, Count: group.Count()))
-                .Where(group => group.Count > 1)
-                .Select(group => group.Position)
-                .ToList();
-
-            proposedMoves.RemoveAll(move => rejectedMoves.Contains(move.Position));
-
-            var stationaryElves = map
-                .Where((_, index) => !proposedMoves.Any(move => move.Index == index))
-                .Select(x => x.Key)
-                .ToList();
-
-            var combined = proposedMoves.Select(move => move.Position).Union(stationaryElves);
-
-            map.Clear();
-
-            foreach (var elf in combined)
+            if (part == 2 && moves.Count == 0)
             {
-                map[elf] = '#';
+                return round + 1;
             }
 
-            // Console.WriteLine($"== Round {round} ==");
-            // DrawMap(map);
-            // Console.WriteLine();
+            var stationaryElves = GetStationaryElves(map, moves);
+            UpdateMap(map, moves, stationaryElves);
         }
 
         return CountEmptyGroundTiles(map);
     }
 
-    public static int Part2()
+    private static HashSet<(int Row, int Col)> GetMap()
     {
-        var map = GetMap();
+        var map = new HashSet<(int Row, int Col)>();
 
-        for (var round = 0; round < int.MaxValue; round++)
+        for (var i = 0; i < Input.Length; i++)
         {
-            // Console.WriteLine($"round: {round}");
-
-            var proposedMoves = GetProposedMoves(map, round);
-
-            var rejectedMoves = proposedMoves
-                .GroupBy(move => move.Position)
-                .Select(group => (Position: group.Key, Count: group.Count()))
-                .Where(group => group.Count > 1)
-                .Select(group => group.Position)
-                .ToList();
-
-            proposedMoves.RemoveAll(move => rejectedMoves.Contains(move.Position));
-
-            if (proposedMoves.Count == 0)
+            for (var j = 0; j < Input[i].Length; j++)
             {
-                return round + 1;
-            }
-
-            var stationaryElves = map
-                .Where((_, index) => !proposedMoves.Any(move => move.Index == index))
-                .Select(x => x.Key)
-                .ToList();
-
-            var combined = proposedMoves.Select(move => move.Position).Union(stationaryElves);
-
-            map.Clear();
-
-            foreach (var elf in combined)
-            {
-                map[elf] = '#';
-            }
-
-            // Console.WriteLine($"== Round {round} ==");
-            // DrawMap(map);
-            // Console.WriteLine();
-        }
-
-        return 0;
-    }
-
-    private static int CountEmptyGroundTiles(Dictionary<(int Row, int Col), char> map)
-    {
-        var count = 0;
-
-        var minRow = map.Min(n => n.Key.Row);
-        var maxRow = map.Max(n => n.Key.Row);
-        var minCol = map.Min(n => n.Key.Col);
-        var maxCol = map.Max(n => n.Key.Col);
-
-        for (var row = minRow; row <= maxRow; row++)
-        {
-            for (var col = minCol; col <= maxCol; col++)
-            {
-                var value = map.TryGetValue((row, col), out var v) ? v : '.';
-                count += value == '.' ? 1 : 0;
+                if (Input[i][j] == '#')
+                {
+                    map.Add((i, j));
+                }
             }
         }
 
-        return count;
+        return map;
     }
 
-    private static List<(int Index, (int Row, int Col) Position)> GetProposedMoves(Dictionary<(int Row, int Col), char> map, int round)
+    private static IEnumerable<(int Index, (int Row, int Col) Position)> GetProposedMoves(
+        HashSet<(int Row, int Col)> map,
+        int round)
     {
-        var proposedMoves = new List<(int Index, (int Row, int Col))>();
-
-        for (var i = 0; i < map.Keys.Count; i++)
+        for (var i = 0; i < map.Count; i++)
         {
-            var (row, col) = map.Keys.ElementAt(i);
+            var (row, col) = map.ElementAt(i);
 
             var neighbors = new[]
             {
@@ -134,145 +68,101 @@ public static class Day23
                 (row + 1, col + 1), // 7
             };
 
-            if (!map.Any(m => neighbors.Contains(m.Key)))
+            if (AllNeighborsAreEmpty(map, neighbors))
             {
                 continue;
             }
 
             if (round % 4 == 0)
             {
-                // look north
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[1]) && !map.ContainsKey(neighbors[2]))
+                if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[1]) && !map.Contains(neighbors[2]))
                 {
-                    // propose moving north
-                    proposedMoves.Add((i, (row - 1, col)));
-                    continue;
+                    // north
+                    yield return (i, (row - 1, col));
                 }
-
-                // look south
-                if (!map.ContainsKey(neighbors[5]) && !map.ContainsKey(neighbors[6]) && !map.ContainsKey(neighbors[7]))
+                else if (!map.Contains(neighbors[5]) && !map.Contains(neighbors[6]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving south
-                    proposedMoves.Add((i, (row + 1, col)));
-                    continue;
+                    // south
+                    yield return (i, (row + 1, col));
                 }
-
-                // look west
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[3]) && !map.ContainsKey(neighbors[5]))
+                else if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[3]) && !map.Contains(neighbors[5]))
                 {
-                    // propose moving west
-                    proposedMoves.Add((i, (row, col - 1)));
-                    continue;
+                    // west
+                    yield return (i, (row, col - 1));
                 }
-
-                // look east
-                if (!map.ContainsKey(neighbors[2]) && !map.ContainsKey(neighbors[4]) && !map.ContainsKey(neighbors[7]))
+                else if (!map.Contains(neighbors[2]) && !map.Contains(neighbors[4]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving east
-                    proposedMoves.Add((i, (row, col + 1)));
-                    continue;
+                    // east
+                    yield return (i, (row, col + 1));
                 }
             }
             else if (round % 4 == 1)
             {
-                // look south
-                if (!map.ContainsKey(neighbors[5]) && !map.ContainsKey(neighbors[6]) && !map.ContainsKey(neighbors[7]))
+                if (!map.Contains(neighbors[5]) && !map.Contains(neighbors[6]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving south
-                    proposedMoves.Add((i, (row + 1, col)));
-                    continue;
+                    // south
+                    yield return (i, (row + 1, col));
                 }
-
-                // look west
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[3]) && !map.ContainsKey(neighbors[5]))
+                else if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[3]) && !map.Contains(neighbors[5]))
                 {
-                    // propose moving west
-                    proposedMoves.Add((i, (row, col - 1)));
-                    continue;
+                    // west
+                    yield return (i, (row, col - 1));
                 }
-
-                // look east
-                if (!map.ContainsKey(neighbors[2]) && !map.ContainsKey(neighbors[4]) && !map.ContainsKey(neighbors[7]))
+                else if (!map.Contains(neighbors[2]) && !map.Contains(neighbors[4]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving east
-                    proposedMoves.Add((i, (row, col + 1)));
-                    continue;
+                    // east
+                    yield return (i, (row, col + 1));
                 }
-
-                // look north
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[1]) && !map.ContainsKey(neighbors[2]))
+                else if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[1]) && !map.Contains(neighbors[2]))
                 {
-                    // propose moving north
-                    proposedMoves.Add((i, (row - 1, col)));
-                    continue;
+                    // north
+                    yield return (i, (row - 1, col));
                 }
             }
             else if (round % 4 == 2)
             {
-                // look west
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[3]) && !map.ContainsKey(neighbors[5]))
+                if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[3]) && !map.Contains(neighbors[5]))
                 {
-                    // propose moving west
-                    proposedMoves.Add((i, (row, col - 1)));
-                    continue;
+                    // west
+                    yield return (i, (row, col - 1));
                 }
-
-                // look east
-                if (!map.ContainsKey(neighbors[2]) && !map.ContainsKey(neighbors[4]) && !map.ContainsKey(neighbors[7]))
+                else if (!map.Contains(neighbors[2]) && !map.Contains(neighbors[4]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving east
-                    proposedMoves.Add((i, (row, col + 1)));
-                    continue;
+                    // east
+                    yield return (i, (row, col + 1));
                 }
-
-                // look north
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[1]) && !map.ContainsKey(neighbors[2]))
+                else if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[1]) && !map.Contains(neighbors[2]))
                 {
-                    // propose moving north
-                    proposedMoves.Add((i, (row - 1, col)));
-                    continue;
+                    // north
+                    yield return (i, (row - 1, col));
                 }
-
-                // look south
-                if (!map.ContainsKey(neighbors[5]) && !map.ContainsKey(neighbors[6]) && !map.ContainsKey(neighbors[7]))
+                else if (!map.Contains(neighbors[5]) && !map.Contains(neighbors[6]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving south
-                    proposedMoves.Add((i, (row + 1, col)));
-                    continue;
+                    // south
+                    yield return (i, (row + 1, col));
                 }
             }
             else if (round % 4 == 3)
             {
-                // look east
-                if (!map.ContainsKey(neighbors[2]) && !map.ContainsKey(neighbors[4]) && !map.ContainsKey(neighbors[7]))
+                if (!map.Contains(neighbors[2]) && !map.Contains(neighbors[4]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving east
-                    proposedMoves.Add((i, (row, col + 1)));
-                    continue;
+                    // east
+                    yield return (i, (row, col + 1));
                 }
-
-                // look north
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[1]) && !map.ContainsKey(neighbors[2]))
+                else if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[1]) && !map.Contains(neighbors[2]))
                 {
-                    // propose moving north
-                    proposedMoves.Add((i, (row - 1, col)));
-                    continue;
+                    // north
+                    yield return (i, (row - 1, col));
                 }
-
-                // look south
-                if (!map.ContainsKey(neighbors[5]) && !map.ContainsKey(neighbors[6]) && !map.ContainsKey(neighbors[7]))
+                else if (!map.Contains(neighbors[5]) && !map.Contains(neighbors[6]) && !map.Contains(neighbors[7]))
                 {
-                    // propose moving south
-                    proposedMoves.Add((i, (row + 1, col)));
-                    continue;
+                    // south
+                    yield return (i, (row + 1, col));
                 }
-
-                // look west
-                if (!map.ContainsKey(neighbors[0]) && !map.ContainsKey(neighbors[3]) && !map.ContainsKey(neighbors[5]))
+                else if (!map.Contains(neighbors[0]) && !map.Contains(neighbors[3]) && !map.Contains(neighbors[5]))
                 {
-                    // propose moving west
-                    proposedMoves.Add((i, (row, col - 1)));
-                    continue;
+                    // west
+                    yield return (i, (row, col - 1));
                 }
             }
             else
@@ -280,44 +170,62 @@ public static class Day23
                 throw new InvalidOperationException();
             }
         }
-
-        return proposedMoves;
     }
 
-    private static Dictionary<(int Row, int Col), char> GetMap()
+    private static void RemoveRejectedMoves(List<(int Index, (int Row, int Col) Position)> proposedMoves)
     {
-        var map = new Dictionary<(int, int), char>();
+        var rejectedMoves = proposedMoves
+            .GroupBy(move => move.Position)
+            .Select(group => (Position: group.Key, Count: group.Count()))
+            .Where(group => group.Count > 1)
+            .Select(group => group.Position)
+            .ToList();
 
-        for (var i = 0; i < Input.Length; i++)
+        proposedMoves.RemoveAll(move => rejectedMoves.Contains(move.Position));
+    }
+
+    private static List<(int Row, int Col)> GetStationaryElves(
+        HashSet<(int Row, int Col)> map,
+        List<(int Index, (int Row, int Col) Position)> proposedMoves) =>
+        map.Where((_, index) => proposedMoves.All(move => move.Index != index)).ToList();
+
+    private static void UpdateMap(
+        HashSet<(int Row, int Col)> map,
+        List<(int Index, (int Row, int Col) Position)> proposedMoves,
+        List<(int Row, int Col)> stationaryElves)
+    {
+        var combined = proposedMoves
+            .Select(move => move.Position)
+            .Union(stationaryElves);
+
+        map.Clear();
+
+        foreach (var position in combined)
         {
-            for (var j = 0; j < Input[i].Length; j++)
-            {
-                if (Input[i][j] == '#')
-                {
-                    map[(i, j)] = '#';
-                }
-            }
+            map.Add(position);
         }
-
-        return map;
     }
 
-    private static void DrawMap(IReadOnlyDictionary<(int Row, int Col), char> map)
+    private static int CountEmptyGroundTiles(HashSet<(int Row, int Col)> map)
     {
-        var minRow = map.Min(n => n.Key.Row);
-        var maxRow = map.Max(n => n.Key.Row);
-        var minCol = map.Min(n => n.Key.Col);
-        var maxCol = map.Max(n => n.Key.Col);
+        var count = 0;
+
+        var minRow = map.Min(n => n.Row);
+        var maxRow = map.Max(n => n.Row);
+        var minCol = map.Min(n => n.Col);
+        var maxCol = map.Max(n => n.Col);
 
         for (var row = minRow; row <= maxRow; row++)
         {
             for (var col = minCol; col <= maxCol; col++)
             {
-                var value = map.TryGetValue((row, col), out var v) ? v : '.';
-                Console.Write(value);
+                count += map.Contains((row, col)) ? 0 : 1;
             }
-
-            Console.WriteLine();
         }
+
+        return count;
     }
+
+    private static bool AllNeighborsAreEmpty(HashSet<(int Row, int Col)> map, IEnumerable<(int, int)> neighbors) =>
+        !neighbors.Any(map.Contains);
 }
