@@ -9,42 +9,46 @@ public static class Day22
     public static int Part1()
     {
         var values = Input.Split($"{Environment.NewLine}{Environment.NewLine}");
-        var map = values[0].Split(Environment.NewLine);
-        var path = values[1];
-        var instructions = GetInstructions(path);
+        var map = GetMap(values[0]);
+        var instructions = GetInstructions(values[1]);
 
-        // foreach (var line in map)
-        // {
-        //     Console.WriteLine(line);
-        // }
+        Console.WriteLine($"map.Count = {map.Count}");
+        DrawMap(map);
+        Console.WriteLine(string.Join(',', instructions));
 
-        // Console.WriteLine(path);
-        
-        // var temp = string.Join(',', instructions);
-        // Console.WriteLine(temp);
-
-        foreach (var item in instructions)
-        {
-            if (item is int number)
-            {
-                // Console.WriteLine($"{item} is a number!");
-            }
-        
-            if (item is char direction)
-            {
-                // Console.WriteLine($"{item} is a direction!");
-            }
-        }
-        
         return 1;
     }
 
-    private static List<object> GetInstructions(string path)
+    public static int Part2() => 2;
+
+    private static Dictionary<(int Row, int Col), char> GetMap(string input)
     {
-        var buffer = new StringBuilder();
+        var map = new Dictionary<(int Row, int Col), char>();
+        var lines = input.Split(Environment.NewLine);
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            for (var j = 0; j < lines[i].Length; j++)
+            {
+                var (row, col) = (i + 1, j + 1);
+                var c = lines[i][j];
+
+                if (c != ' ')
+                {
+                    map[(row, col)] = lines[i][j];
+                }
+            }
+        }
+
+        return map;
+    }
+
+    private static List<object> GetInstructions(string input)
+    {
+        var builder = new StringBuilder();
         var instructions = new List<object>();
 
-        foreach (var c in path)
+        foreach (var c in input)
         {
             switch (c)
             {
@@ -52,25 +56,45 @@ public static class Day22
                 case 'D':
                 case 'L':
                 case 'R':
-                    if (buffer.Length > 0)
+                    if (builder.Length > 0)
                     {
-                        instructions.Add(int.Parse(buffer.ToString()));
-                        buffer.Clear();
+                        instructions.Add(int.Parse(builder.ToString()));
+                        builder.Clear();
                     }
 
                     instructions.Add(c);
                     break;
                 default:
-                    buffer.Append(c);
+                    builder.Append(c);
                     break;
             }
+        }
+
+        if (builder.Length > 0)
+        {
+            instructions.Add(int.Parse(builder.ToString()));
+            builder.Clear();
         }
 
         return instructions;
     }
 
-    public static int Part2()
+    private static void DrawMap(IReadOnlyDictionary<(int Row, int Col), char> map)
     {
-        return 2;
+        var minRow = map.Min(n => n.Key.Row);
+        var maxRow = map.Max(n => n.Key.Row);
+        var minCol = map.Min(n => n.Key.Col);
+        var maxCol = map.Max(n => n.Key.Col);
+
+        for (var row = minRow; row <= maxRow; row++)
+        {
+            for (var col = minCol; col <= maxCol; col++)
+            {
+                var value = map.TryGetValue((row, col), out var v) ? v : ' ';
+                Console.Write(value);
+            }
+
+            Console.WriteLine();
+        }
     }
 }
