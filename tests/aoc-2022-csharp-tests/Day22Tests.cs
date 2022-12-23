@@ -8,7 +8,7 @@ public class Day22Tests
     public void Part1Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 50412;
 
         // act
         var actual = Day22.Part1();
