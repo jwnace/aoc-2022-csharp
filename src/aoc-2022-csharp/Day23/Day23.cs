@@ -53,7 +53,7 @@ public static class Day23
 
         for (var round = 0; round < int.MaxValue; round++)
         {
-            Console.WriteLine($"round: {round}");
+            // Console.WriteLine($"round: {round}");
 
             var proposedMoves = GetProposedMoves(map, round);
 
