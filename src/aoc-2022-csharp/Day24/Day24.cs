@@ -206,53 +206,22 @@ public static class Day24
         return 0;
     }
 
-    private static IEnumerable<Blizzard> MoveBlizzards(IEnumerable<Blizzard> blizzards)
+    private static Dictionary<(int Row, int Col), char> GetMap()
     {
-        var minRow = Map.Min(n => n.Key.Row);
-        var maxRow = Map.Max(n => n.Key.Row);
-        var minCol = Map.Min(n => n.Key.Col);
-        var maxCol = Map.Max(n => n.Key.Col);
+        var map = new Dictionary<(int Row, int Col), char>();
 
-        foreach (var blizzard in blizzards)
+        for (var i = 0; i < Input.Length; i++)
         {
-            var (row, col, direction) = blizzard;
-
-            var position = direction switch
+            for (var j = 0; j < Input[i].Length; j++)
             {
-                '^' => (row - 1, col),
-                'v' => (row + 1, col),
-                '<' => (row, col - 1),
-                '>' => (row, col + 1),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            if (Map.TryGetValue(position, out var value) && value == '#')
-            {
-                position = direction switch
+                if (Input[i][j] != '.')
                 {
-                    '^' => (maxRow - 1, col),
-                    'v' => (minRow + 1, col),
-                    '<' => (row, maxCol - 1),
-                    '>' => (row, minCol + 1),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                    map[(i, j)] = Input[i][j];
+                }
             }
-
-            // TODO: test if I can just return `blizzard` instead of instantiating a new one every time
-            yield return new Blizzard(position, blizzard.Direction);
         }
-    }
 
-    private static void RemoveBlizzardsFromMap(List<Blizzard> blizzards)
-    {
-        var blizzardPositions = Map
-            .Where(x => blizzards.Any(b => (b.Position.Row, b.Position.Col) == (x.Key.Row, x.Key.Col)))
-            .ToList();
-
-        foreach (var position in blizzardPositions)
-        {
-            Map.Remove(position.Key);
-        }
+        return map;
     }
 
     private static List<Blizzard> GetBlizzards()
@@ -292,22 +261,53 @@ public static class Day24
         return blizzards;
     }
 
-    private static Dictionary<(int Row, int Col), char> GetMap()
+    private static void RemoveBlizzardsFromMap(List<Blizzard> blizzards)
     {
-        var map = new Dictionary<(int Row, int Col), char>();
+        var blizzardPositions = Map
+            .Where(x => blizzards.Any(b => (b.Position.Row, b.Position.Col) == (x.Key.Row, x.Key.Col)))
+            .ToList();
 
-        for (var i = 0; i < Input.Length; i++)
+        foreach (var position in blizzardPositions)
         {
-            for (var j = 0; j < Input[i].Length; j++)
-            {
-                if (Input[i][j] != '.')
-                {
-                    map[(i, j)] = Input[i][j];
-                }
-            }
+            Map.Remove(position.Key);
         }
+    }
 
-        return map;
+    private static IEnumerable<Blizzard> MoveBlizzards(IEnumerable<Blizzard> blizzards)
+    {
+        var minRow = Map.Min(n => n.Key.Row);
+        var maxRow = Map.Max(n => n.Key.Row);
+        var minCol = Map.Min(n => n.Key.Col);
+        var maxCol = Map.Max(n => n.Key.Col);
+
+        foreach (var blizzard in blizzards)
+        {
+            var (row, col, direction) = blizzard;
+
+            var position = direction switch
+            {
+                '^' => (row - 1, col),
+                'v' => (row + 1, col),
+                '<' => (row, col - 1),
+                '>' => (row, col + 1),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            if (Map.TryGetValue(position, out var value) && value == '#')
+            {
+                position = direction switch
+                {
+                    '^' => (maxRow - 1, col),
+                    'v' => (minRow + 1, col),
+                    '<' => (row, maxCol - 1),
+                    '>' => (row, minCol + 1),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            }
+
+            // TODO: test if I can just return `blizzard` instead of instantiating a new one every time
+            yield return new Blizzard(position, blizzard.Direction);
+        }
     }
 
     private static void DrawMap(IReadOnlyCollection<Blizzard> blizzards, (int Row, int Col) player)
