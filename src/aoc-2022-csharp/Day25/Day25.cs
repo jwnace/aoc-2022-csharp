@@ -11,7 +11,7 @@ public static class Day25
         return ConvertDecimalToSnafu(Input.Sum(ConvertSnafuToDecimal));
     }
 
-    public static long Part2() => 2;
+    public static string Part2() => "Merry Christmas!";
 
     public static long ConvertSnafuToDecimal(string input)
     {
@@ -42,7 +42,6 @@ public static class Day25
     {
         var builder = new StringBuilder();
         var number = input;
-
         var maxPlaceValue = 1L * 2L;
         var placeIndex = 0;
 
@@ -51,8 +50,6 @@ public static class Day25
             maxPlaceValue *= 5;
             placeIndex++;
         }
-
-        // Console.WriteLine($"number: {number} => placeIndex: {placeIndex} => placeValue: {Math.Pow(5, placeIndex)} => maxPlaceValue: {maxPlaceValue}");
 
         var temp = 0L;
 
@@ -69,21 +66,12 @@ public static class Day25
                 (Value: placeValue * -2, Symbol: '='),
             };
 
-            // pick the smallest value that is bigger than our number
-            // var value = possibleValues
-            //     .Where(v => temp + v.Value >= number)
-            //     .MinBy(v => v.Value);
-
-            var query = possibleValues
-                .Select(v => new { Value = v, Difference = Math.Abs((temp + v.Value) - number) })
-                .ToList();
-
             // pick the value that is CLOSEST to our number
             var value = possibleValues
-                .Select(v => new { Value = v, Difference = Math.Abs((temp + v.Value) - number) })
+                .Select(v => new { Value = v, Difference = Math.Abs(temp + v.Value - number) })
                 .MinBy(x => x.Difference);
 
-            builder.Append(value.Value.Symbol);
+            builder.Append(value!.Value.Symbol);
             temp += value.Value.Value;
         }
 

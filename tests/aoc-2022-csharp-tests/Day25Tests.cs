@@ -62,17 +62,4 @@ public class Day25Tests
         // assert
         actual.Should().Be(expected);
     }
-
-    // [Test]
-    // public void Part2Test()
-    // {
-    //     // arrange
-    //     var expected = 0;
-    //
-    //     // act
-    //     var actual = Day25.Part2();
-    //
-    //     // assert
-    //     actual.Should().Be(expected);
-    // }
 }
