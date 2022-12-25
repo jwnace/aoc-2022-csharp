@@ -22,3 +22,4 @@ global using aoc_2022_csharp.Day21;
 global using aoc_2022_csharp.Day22;
 global using aoc_2022_csharp.Day23;
 global using aoc_2022_csharp.Day24;
+global using aoc_2022_csharp.Day25;
