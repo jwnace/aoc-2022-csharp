@@ -7,11 +7,12 @@ public static class Day24
     private static readonly List<Blizzard> Blizzards = GetBlizzards();
     private static readonly Dictionary<int, List<Blizzard>> BlizzardMemo = new();
 
-    public static int Part1() => GetShortestPathPart1(((Row: 0, Col: 1), Time: 0));
+    public static int Part1() => GetShortestPathForPart1((Player: (Row: 0, Col: 1), Time: 0));
 
-    public static int Part2() => GetShortestPathPart2(((Row: 0, Col: 1), Time: 0, HasReachedEnd: false, HasReachedStart: false));
+    public static int Part2() => GetShortestPathForPart2(
+        (Player: (Row: 0, Col: 1), Time: 0, HasReachedEnd: false, HasReachedStart: false));
 
-    private static int GetShortestPathPart1(((int Row, int Col) Player, int Time) initialState)
+    private static int GetShortestPathForPart1(((int Row, int Col) Player, int Time) initialState)
     {
         var states = new HashSet<((int Row, int Col) Player, int Time)>();
         states.Add(initialState);
@@ -40,15 +41,8 @@ public static class Day24
 
             seen.Add(state);
 
-            if (seen.Count % 10_000 == 0)
-            {
-                Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
-            }
-
             if (player == destination)
             {
-                Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
-                DrawMap(GetBlizzards(time), player);
                 return state.Time;
             }
 
@@ -105,12 +99,14 @@ public static class Day24
         return 0;
     }
 
-    private static int GetShortestPathPart2(((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart) initialState)
+    private static int GetShortestPathForPart2(
+        ((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart) initialState)
     {
         var states = new HashSet<((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart)>();
         states.Add(initialState);
 
-        var queue = new PriorityQueue<((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart), int>();
+        var queue = new PriorityQueue<
+            ((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart), int>();
         queue.Enqueue(initialState, 0);
 
         var seen = new HashSet<((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart)>();
@@ -134,11 +130,7 @@ public static class Day24
 
             seen.Add(state);
 
-            if (seen.Count % 10_000 == 0)
-            {
-                Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
-            }
-
+            // this is the first time reaching the start, AFTER reaching the end
             if (player == (0, 1) && hasReachedEnd && !hasReachedStart)
             {
                 hasReachedStart = true;
@@ -146,25 +138,17 @@ public static class Day24
 
             if (player == destination)
             {
+                // this is the first time reaching the end
                 if (!hasReachedEnd)
                 {
                     hasReachedEnd = true;
-                    continue;
                 }
 
-                if (!hasReachedStart)
-                {
-                    continue;
-                }
-
+                // this is the first time reaching the end, AFTER reaching the start
                 if (hasReachedEnd && hasReachedStart)
                 {
-                    Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
-                    DrawMap(GetBlizzards(time), player);
                     return state.Time;
                 }
-
-                throw new Exception("wtf");
             }
 
             var blizzards = GetBlizzards(time + 1);
@@ -203,7 +187,8 @@ public static class Day24
                     continue;
                 }
 
-                var newState = (Player: neighbor, Time: time + 1, HasReachedEnd: hasReachedEnd, HasReachedStart: hasReachedStart);
+                var newState = (Player: neighbor, Time: time + 1, HasReachedEnd: hasReachedEnd,
+                    HasReachedStart: hasReachedStart);
                 states.Add(newState);
                 queue.Enqueue(newState, newState.Time);
             }
@@ -211,7 +196,8 @@ public static class Day24
             // if a blizzard moved on top of the player, the player MUST move
             if (blizzards.All(b => b.Position != player))
             {
-                var newState = (Player: player, Time: time + 1, HasReachedEnd: hasReachedEnd, HasReachedStart: hasReachedStart);
+                var newState = (Player: player, Time: time + 1, HasReachedEnd: hasReachedEnd,
+                    HasReachedStart: hasReachedStart);
                 states.Add(newState);
                 queue.Enqueue(newState, newState.Time);
             }
