@@ -7,11 +7,11 @@ public static class Day24
     private static readonly List<Blizzard> Blizzards = GetBlizzards();
     private static readonly Dictionary<int, List<Blizzard>> BlizzardMemo = new();
 
-    public static int Part1() => GetShortestPath(((Row: 0, Col: 1), Time: 0));
+    public static int Part1() => GetShortestPathPart1(((Row: 0, Col: 1), Time: 0));
 
-    public static int Part2() => 2;
+    public static int Part2() => GetShortestPathPart2(((Row: 0, Col: 1), Time: 0, HasReachedEnd: false, HasReachedStart: false));
 
-    private static int GetShortestPath(((int Row, int Col) Player, int Time) initialState)
+    private static int GetShortestPathPart1(((int Row, int Col) Player, int Time) initialState)
     {
         var states = new HashSet<((int Row, int Col) Player, int Time)>();
         states.Add(initialState);
@@ -40,7 +40,7 @@ public static class Day24
 
             seen.Add(state);
 
-            if (seen.Count % 1_000 == 0)
+            if (seen.Count % 10_000 == 0)
             {
                 Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
             }
@@ -97,6 +97,121 @@ public static class Day24
             if (blizzards.All(b => b.Position != player))
             {
                 var newState = (Player: player, Time: time + 1);
+                states.Add(newState);
+                queue.Enqueue(newState, newState.Time);
+            }
+        }
+
+        return 0;
+    }
+
+    private static int GetShortestPathPart2(((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart) initialState)
+    {
+        var states = new HashSet<((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart)>();
+        states.Add(initialState);
+
+        var queue = new PriorityQueue<((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart), int>();
+        queue.Enqueue(initialState, 0);
+
+        var seen = new HashSet<((int Row, int Col) Player, int Time, bool HasReachedEnd, bool HasReachedStart)>();
+
+        var minRow = Map.Min(m => m.Key.Item1);
+        var maxRow = Map.Max(m => m.Key.Item1);
+        var minCol = Map.Min(m => m.Key.Item2);
+        var maxCol = Map.Max(m => m.Key.Item2);
+        var destination = (maxRow, maxCol - 1);
+
+        while (queue.Count > 0)
+        {
+            var state = queue.Dequeue();
+            var (player, time, hasReachedEnd, hasReachedStart) = state;
+            var (row, col) = player;
+
+            if (seen.Contains(state))
+            {
+                continue;
+            }
+
+            seen.Add(state);
+
+            if (seen.Count % 10_000 == 0)
+            {
+                Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
+            }
+
+            if (player == (0, 1) && hasReachedEnd && !hasReachedStart)
+            {
+                hasReachedStart = true;
+            }
+
+            if (player == destination)
+            {
+                if (!hasReachedEnd)
+                {
+                    hasReachedEnd = true;
+                    continue;
+                }
+
+                if (!hasReachedStart)
+                {
+                    continue;
+                }
+
+                if (hasReachedEnd && hasReachedStart)
+                {
+                    Console.WriteLine($"seen: {seen.Count}, time: {state.Time}");
+                    DrawMap(GetBlizzards(time), player);
+                    return state.Time;
+                }
+
+                throw new Exception("wtf");
+            }
+
+            var blizzards = GetBlizzards(time + 1);
+
+            var neighbors = new[]
+            {
+                (Row: row + 1, Col: col),
+                (Row: row, Col: col + 1),
+                (Row: row - 1, Col: col),
+                (Row: row, Col: col - 1),
+            };
+
+            foreach (var neighbor in neighbors)
+            {
+                // don't move into a wall
+                if (Map.TryGetValue(neighbor, out var value) && value == '#')
+                {
+                    continue;
+                }
+
+                // don't move above the Map
+                if (neighbor.Row < minRow)
+                {
+                    continue;
+                }
+
+                // don't move below the Map
+                if (neighbor.Row > maxRow)
+                {
+                    continue;
+                }
+
+                // don't move into a blizzard
+                if (blizzards.Any(b => b.Position == neighbor))
+                {
+                    continue;
+                }
+
+                var newState = (Player: neighbor, Time: time + 1, HasReachedEnd: hasReachedEnd, HasReachedStart: hasReachedStart);
+                states.Add(newState);
+                queue.Enqueue(newState, newState.Time);
+            }
+
+            // if a blizzard moved on top of the player, the player MUST move
+            if (blizzards.All(b => b.Position != player))
+            {
+                var newState = (Player: player, Time: time + 1, HasReachedEnd: hasReachedEnd, HasReachedStart: hasReachedStart);
                 states.Add(newState);
                 queue.Enqueue(newState, newState.Time);
             }
