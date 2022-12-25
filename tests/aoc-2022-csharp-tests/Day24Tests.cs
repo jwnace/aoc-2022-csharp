@@ -21,7 +21,7 @@ public class Day24Tests
     public void Part2Test()
     {
         // arrange
-        var expected = 0;
+        var expected = 747;
 
         // act
         var actual = Day24.Part2();
