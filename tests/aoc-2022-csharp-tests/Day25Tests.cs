@@ -23,7 +23,6 @@ public class Day25Tests
     public void ConvertSnafuToDecimal_ReturnsCorrectResult(string input, int expected)
     {
         var actual = Day25.ConvertSnafuToDecimal(input);
-
         actual.Should().Be(expected);
     }
 
@@ -46,20 +45,22 @@ public class Day25Tests
     public void ConvertDecimalToSnafu_ReturnsCorrectResult(long input, string expected)
     {
         var actual = Day25.ConvertDecimalToSnafu(input);
-
         actual.Should().Be(expected);
     }
 
     [Test]
-    public void Part1Test()
+    public void Part1_ReturnsCorrectResult()
     {
-        // arrange
         var expected = "2==221=-002=0-02-000";
-
-        // act
         var actual = Day25.Part1();
+        actual.Should().Be(expected);
+    }
 
-        // assert
+    [Test]
+    public void Part2_ReturnsCorrectResult()
+    {
+        var expected = "Merry Christmas!";
+        var actual = Day25.Part2();
         actual.Should().Be(expected);
     }
 }

@@ -14,38 +14,25 @@ public class Day06Tests
     [TestCase("nppdvjthqldpwncqszvftbrmjlhg", 14, 23)]
     [TestCase("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 14, 29)]
     [TestCase("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 14, 26)]
-    public void GetStartOfPacketMarkerTest(string message, int sliceSize, int expected)
+    public void GetStartOfPacketMarker_ReturnsCorrectResult(string message, int sliceSize, int expected)
     {
-        // act
         var actual = Day06.GetStartOfPacketMarker(message, sliceSize);
-
-        // assert
         actual.Should().Be(expected);
     }
 
     [Test]
-    public void Part1Test()
+    public void Part1_ReturnsCorrectResult()
     {
-        // arrange
-        var expected = 1892;
-
-        // act
+        var expected = 1_892;
         var actual = Day06.Part1();
-
-        // assert
         actual.Should().Be(expected);
     }
 
     [Test]
-    public void Part2Test()
+    public void Part2_ReturnsCorrectResult()
     {
-        // arrange
-        var expected = 2313;
-
-        // act
+        var expected = 2_313;
         var actual = Day06.Part2();
-
-        // assert
         actual.Should().Be(expected);
     }
 }
