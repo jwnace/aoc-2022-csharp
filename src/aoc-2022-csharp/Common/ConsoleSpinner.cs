@@ -13,7 +13,11 @@ internal class ConsoleSpinner
     private readonly Timer _timer;
     private int _counter;
 
-    public ConsoleSpinner(string message = "", Stopwatch? stopwatch = null, int? left = null, int? top = null,
+    public ConsoleSpinner(
+        string message = "",
+        Stopwatch? stopwatch = null,
+        int? left = null,
+        int? top = null,
         int delay = 200)
     {
         _message = message;
