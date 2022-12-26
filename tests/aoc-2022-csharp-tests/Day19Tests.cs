@@ -5,28 +5,18 @@ namespace aoc_2022_csharp_tests;
 public class Day19Tests
 {
     [Test]
-    public void Part1Test()
+    public void Part1_ReturnsCorrectResult()
     {
-        // arrange
-        var expected = 1565;
-
-        // act
+        var expected = 1_565;
         var actual = Day19.Part1();
-
-        // assert
         actual.Should().Be(expected);
     }
 
     [Test]
-    public void Part2Test()
+    public void Part2_ReturnsCorrectResult()
     {
-        // arrange
-        var expected = 10672;
-
-        // act
+        var expected = 10_672;
         var actual = Day19.Part2();
-
-        // assert
         actual.Should().Be(expected);
     }
 }

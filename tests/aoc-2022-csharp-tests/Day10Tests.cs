@@ -5,22 +5,16 @@ namespace aoc_2022_csharp_tests;
 public class Day10Tests
 {
     [Test]
-    public void Part1Test()
+    public void Part1_ReturnsCorrectResult()
     {
-        // arrange
-        var expected = 11820;
-
-        // act
+        var expected = 11_820;
         var actual = Day10.Part1();
-
-        // assert
         actual.Should().Be(expected);
     }
 
     [Test]
-    public void Part2Test()
+    public void Part2_ReturnsCorrectResult()
     {
-        // arrange
         var expected =
             Environment.NewLine + "#### ###    ## ###  ###  #  #  ##  #  # " +
             Environment.NewLine + "#    #  #    # #  # #  # # #  #  # #  # " +
@@ -29,10 +23,7 @@ public class Day10Tests
             Environment.NewLine + "#    #    #  # #  # # #  # #  #  # #  # " +
             Environment.NewLine + "#### #     ##  ###  #  # #  # #  # #  # ";
 
-        // act
         var actual = Day10.Part2();
-
-        // assert
         actual.Should().Be(expected);
     }
 }
